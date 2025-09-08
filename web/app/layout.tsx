@@ -6,6 +6,12 @@ export const metadata = { title: 'FUSIC Echo', description: 'Training & supervis
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        {/* FullCalendar v6 styles via CDN */}
+        <link rel="stylesheet" href="https://unpkg.com/@fullcalendar/core@6.1.15/index.css" />
+        <link rel="stylesheet" href="https://unpkg.com/@fullcalendar/daygrid@6.1.15/index.css" />
+        <link rel="stylesheet" href="https://unpkg.com/@fullcalendar/timegrid@6.1.15/index.css" />
+      </head>
       <body className="min-h-screen bg-gray-50 text-gray-900">
         <div className="max-w-5xl mx-auto p-4">
           <header className="flex items-center justify-between py-4">
