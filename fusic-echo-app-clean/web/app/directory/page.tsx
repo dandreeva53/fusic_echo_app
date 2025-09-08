@@ -14,6 +14,7 @@ const MOCK: User[] = [
   { name: 'Bob Peters', email: 'bob@uclh.nhs.uk', role: 'Supervisor', accreditations: ['FUSIC','BSE Level 1'] },
   { name: 'Melanie Biggs', email: 'd.2204.a@gmail.com', role: 'Supervisor', accreditations: [] },
   { name: 'Carol Smith', email: 'carol@uclh.nhs.uk', role: 'Fellow', accreditations: ['FUSIC'] },
+  { name: 'Daria', email: 'd.andreeva171@gmail.com', role: 'Fellow', accreditations: [] },
 ];
 
 export default function Directory() {
