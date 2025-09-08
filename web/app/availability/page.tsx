@@ -5,8 +5,9 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg, DateSelectArg, EventClickArg } from '@fullcalendar/interaction';
-import '@fullcalendar/daygrid/main.css';
-import '@fullcalendar/timegrid/main.css';
+import '@fullcalendar/core/index.css';
+import '@fullcalendar/daygrid/index.css';
+import '@fullcalendar/timegrid/index.css';
 
 type Status = 'available' | 'unavailable' | 'oncall';
 type Location = 'UCLH' | 'WMS' | 'GWB';
