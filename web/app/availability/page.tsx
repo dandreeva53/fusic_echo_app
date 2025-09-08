@@ -1,10 +1,23 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import FullCalendar from '@fullcalendar/react';
+import dynamic from 'next/dynamic';
+const FullCalendar = dynamic(() => import('@fullcalendar/react'), { ssr: false });
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg, DateSelectArg, EventClickArg } from '@fullcalendar/interaction';
+
+// top-level (below imports)
+const fmt = new Intl.DateTimeFormat('en-GB', {
+  dateStyle: 'short',
+  timeStyle: 'short',
+  timeZone: 'Europe/London',
+});
+
+// helper
+function formatRange(startISO: string, endISO: string) {
+  return `${fmt.format(new Date(startISO))} → ${fmt.format(new Date(endISO))}`;
+}
 
 type Status = 'available' | 'unavailable' | 'oncall';
 type Location = 'UCLH' | 'WMS' | 'GWB';
@@ -208,7 +221,7 @@ export default function Availability() {
             <div key={s.id} className="bg-white rounded-xl shadow px-4 py-3 flex items-center justify-between">
               <div>
                 <div className="font-medium">
-                  {new Date(s.start).toLocaleString()} → {new Date(s.end).toLocaleString()}
+                  {formatRange(s.start, s.end)}
                 </div>
                 <div className="text-sm text-gray-600">
                   {s.supervisor} • {s.location} • Capacity: {s.capacity} • Booked: {s.bookings}
