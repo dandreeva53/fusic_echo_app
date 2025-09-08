@@ -49,7 +49,7 @@ export default function Directory() {
         {Object.entries(grouped).map(([role, users]) => (
           <div key={role}>
             <h2 className="text-sm font-semibold mb-2">{role}</h2>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {users.map(u=>(
                 <Link key={u.email} href={`/directory/${encodeURIComponent(u.email)}`}>
                   <div className="bg-white rounded-xl shadow px-4 py-3 flex items-center justify-between">
