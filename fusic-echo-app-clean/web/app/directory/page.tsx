@@ -1,55 +1,69 @@
 'use client';
-import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useState, useMemo } from 'react';
 
 type User = {
   name: string;
   email: string;
-  role: 'supervisor'|'fellow';
-  accreditations: { fusic?: boolean; bseL1?: boolean; bseL2?: boolean };
+  role: 'Supervisor' | 'Fellow';
+  accreditations: string[];
+  about?: string;
 };
+
 const MOCK: User[] = [
-  { name: 'Bob Peters', email: 'bob@uclh.nhs.uk', role: 'supervisor', accreditations: { fusic:true, bseL1:true } },
-  { name: 'Carol Smith', email: 'carol@uclh.nhs.uk', role: 'fellow', accreditations: { fusic:true } },
+  { name: 'Bob Peters', email: 'bob@uclh.nhs.uk', role: 'Supervisor', accreditations: ['FUSIC','BSE Level 1'] },
+  { name: 'Melanie Biggs', email: 'd.2204.a@gmail.com', role: 'Supervisor', accreditations: [] },
+  { name: 'Carol Smith', email: 'carol@uclh.nhs.uk', role: 'Fellow', accreditations: ['FUSIC'] },
 ];
 
 export default function Directory() {
-  const [q,setQ] = useState('');
-  const [role,setRole] = useState<'all'|'supervisor'|'fellow'>('all');
+  const [q, setQ] = useState('');
 
-  const filtered = useMemo(()=>MOCK.filter(u=>{
-    const matchRole = role==='all' || u.role===role;
-    const matchQ = [u.name,u.email].join(' ').toLowerCase().includes(q.toLowerCase());
-    return matchRole && matchQ;
-  }),[q,role]);
+  const filtered = useMemo(() => {
+    return MOCK.filter(u =>
+      [u.name, u.email].join(' ').toLowerCase().includes(q.toLowerCase())
+    );
+  }, [q]);
+
+  const grouped = useMemo(() => {
+    return {
+      Supervisor: filtered.filter(u => u.role === 'Supervisor'),
+      Fellow: filtered.filter(u => u.role === 'Fellow'),
+    };
+  }, [filtered]);
 
   return (
-    <div className="grid gap-3">
-      <h2 className="text-lg font-semibold">Directory</h2>
-      <div className="flex gap-2">
-        <input className="input" placeholder="Search name/email" value={q} onChange={e=>setQ(e.target.value)} />
-        <select className="input" value={role} onChange={e=>setRole(e.target.value as any)}>
-          <option value="all">All</option>
-          <option value="supervisor">Supervisors</option>
-          <option value="fellow">Fellows</option>
-        </select>
+    <div>
+      <div className="bg-blue-500 text-white p-4">
+        <h1 className="text-lg font-semibold">ECHO group</h1>
+        <input
+          className="mt-2 w-full rounded-lg px-3 py-2 text-black"
+          placeholder="Search"
+          value={q}
+          onChange={e=>setQ(e.target.value)}
+        />
       </div>
-      {filtered.map(u=>(
-        <div key={u.email} className="card">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="font-medium">{u.name} <span className="text-xs text-gray-500">({u.role})</span></div>
-              <div className="text-sm">{u.email}</div>
-            </div>
-            <div className="text-xs text-gray-700">
-              {['FUSIC','BSE L1','BSE L2'].filter((label,i)=>{
-                const key = (['fusic','bseL1','bseL2'] as const)[i];
-                return u.accreditations[key];
-              }).join(' • ') || '—'}
+
+      <div className="p-4 space-y-6">
+        {Object.entries(grouped).map(([role, users]) => (
+          <div key={role}>
+            <h2 className="text-sm font-semibold mb-2">{role}</h2>
+            <div className="space-y-2">
+              {users.map(u=>(
+                <Link key={u.email} href={`/directory/${encodeURIComponent(u.email)}`}>
+                  <div className="bg-white rounded-xl shadow px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{u.name}</div>
+                      <div className="text-sm text-gray-500">{u.email}</div>
+                    </div>
+                    <span className="text-gray-400">›</span>
+                  </div>
+                </Link>
+              ))}
             </div>
           </div>
-        </div>
-      ))}
-      {filtered.length===0 && <p className="text-sm text-gray-500">No matches.</p>}
+        ))}
+      </div>
     </div>
   );
 }
