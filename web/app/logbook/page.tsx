@@ -1,79 +1,178 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { auth, db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 
-export default function Logbook() {
-  const email = auth.currentUser?.email?.toLowerCase() || '';
-  const [list, setList] = useState<any[]>([]);
+import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { Scan, Gender, listScans, addScan, seedIfEmpty } from './store';
 
-  const [date, setDate] = useState('');
-  const [indication, setIndication] = useState('');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState('');
-  const [bmi, setBmi] = useState('');
-  const [summary, setSummary] = useState('');
-  const [notes, setNotes] = useState('');
-  const [diagnosis, setDiagnosis] = useState('');
-  const [comments, setComments] = useState('');
+const TZ = 'Europe/London';
+const fmtDateTime = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit', month: '2-digit', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', second: '2-digit',
+  hour12: false, timeZone: TZ,
+});
 
-  const load = async () => {
-    if (!email) return;
-    const q = query(collection(db, 'logbookEntries'), where('ownerUid','==',email));
-    const snap = await getDocs(q);
-    setList(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-  };
+function LogbookClient() {
+  const [q, setQ] = useState('');
+  const [items, setItems] = useState<Scan[]>([]);
 
-  useEffect(() => { load(); }, [email]);
+  useEffect(() => {
+    seedIfEmpty();
+    setItems(listScans());
+  }, []);
 
-  const add = async () => {
-    if (!email) return;
-    await addDoc(collection(db, 'logbookEntries'), {
-      ownerUid: email,
-      date: new Date(date),
-      indication,
-      demographics: { age, gender, bmi },
-      summary,
-      notes, diagnosis, comments,
-      views: {}, findings: {},
-      directlyObserved: false,
-      imageQuality: null,
-      locked: false,
-      createdAt: new Date(), updatedAt: new Date()
+  // modal state
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState<Partial<Scan>>({
+    createdAt: new Date().toISOString(),
+    diagnosis: '',
+    gender: 'F',
+  });
+
+  const list = useMemo(() => {
+    const filtered = items.filter((s) => {
+      const hay = `${s.diagnosis} ${s.notes ?? ''} ${s.comments ?? ''} ${s.age ?? ''} ${s.gender ?? ''}`.toLowerCase();
+      return hay.includes(q.toLowerCase());
     });
-    setDate(''); setIndication(''); setAge(''); setGender(''); setBmi(''); setSummary(''); setNotes(''); setDiagnosis(''); setComments('');
-    await load();
-  };
+    return filtered;
+  }, [items, q]);
+
+  function save() {
+    if (!form.diagnosis || !form.createdAt) return;
+    const next: Scan = {
+      id: crypto.randomUUID(),
+      createdAt: form.createdAt!,
+      diagnosis: form.diagnosis!,
+      age: form.age ? Number(form.age) : undefined,
+      gender: (form.gender as Gender) ?? 'Other',
+      bmi: form.bmi ? Number(form.bmi) : undefined,
+      notes: form.notes?.trim(),
+      comments: form.comments?.trim(),
+    };
+    addScan(next);
+    setItems(listScans());
+    setOpen(false);
+  }
 
   return (
-    <div className="grid gap-4">
-      <h2 className="text-lg font-semibold">Logbook</h2>
-      <div className="card grid md:grid-cols-3 gap-2">
-        <input className="input" type="date" value={date} onChange={e=>setDate(e.target.value)} />
-        <input className="input" placeholder="Indication" value={indication} onChange={e=>setIndication(e.target.value)} />
-        <div className="grid grid-cols-3 gap-2">
-          <input className="input" placeholder="Age" value={age} onChange={e=>setAge(e.target.value)} />
-          <input className="input" placeholder="Gender" value={gender} onChange={e=>setGender(e.target.value)} />
-          <input className="input" placeholder="BMI" value={bmi} onChange={e=>setBmi(e.target.value)} />
-        </div>
-        <textarea className="input md:col-span-3" placeholder="Summary" value={summary} onChange={e=>setSummary(e.target.value)} />
-        <input className="input" placeholder="Diagnosis" value={diagnosis} onChange={e=>setDiagnosis(e.target.value)} />
-        <input className="input" placeholder="Notes" value={notes} onChange={e=>setNotes(e.target.value)} />
-        <input className="input" placeholder="Comments" value={comments} onChange={e=>setComments(e.target.value)} />
-        <button className="btn md:col-span-3" onClick={add}>Add entry</button>
+    <div className="pb-20">
+      {/* Header */}
+      <div className="relative bg-blue-500 text-white p-4">
+        <h1 className="text-lg font-semibold">ECHO Scan Activity</h1>
+        <input
+          className="mt-2 w-full rounded-lg px-3 py-2 text-black"
+          placeholder="Search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <button
+          aria-label="Add scan"
+          onClick={() => setOpen(true)}
+          className="absolute right-4 top-4 h-10 w-10 rounded-full bg-white text-blue-600 text-2xl leading-none shadow flex items-center justify-center"
+          title="Add"
+        >
+          +
+        </button>
       </div>
 
-      <div className="grid gap-2">
-        {list.map(e => (
-          <div key={e.id} className="card">
-            <div className="font-medium">{new Date(e.date.seconds? e.date.seconds*1000 : e.date).toLocaleDateString()} — {e.indication}</div>
-            <div className="text-sm text-gray-600">Age {e.demographics?.age || '—'}, Gender {e.demographics?.gender || '—'}, BMI {e.demographics?.bmi || '—'}</div>
-            <div className="text-sm">Diagnosis: {e.diagnosis || '—'}</div>
-            <div className="text-sm">Notes: {e.notes || '—'}</div>
-            <div className="text-sm">Comments: {e.comments || '—'}</div>
-          </div>
+      {/* List with chevrons */}
+      <div className="divide-y">
+        {list.map((s, i) => (
+          <Link key={s.id} href={`/logbook/${s.id}`} className="block p-4 hover:bg-gray-50">
+            <div className="text-sm text-blue-600">{fmtDateTime.format(new Date(s.createdAt))}</div>
+
+            <div className="mt-1 flex items-start gap-3">
+              <div className="mt-1 text-gray-400 select-none">{i + 1}.</div>
+              <div className="flex-1">
+                <div className="font-semibold">{s.diagnosis}</div>
+                <div className="text-gray-600">{ageGenderBmi(s)}</div>
+                {s.notes ? <div className="text-gray-500 truncate">{s.notes}</div> : null}
+              </div>
+              <div className="mt-1 text-gray-400">›</div>
+            </div>
+          </Link>
         ))}
+        {list.length === 0 && <div className="p-6 text-center text-gray-500">No scans yet.</div>}
       </div>
+
+      {/* Download placeholder */}
+      <div className="p-4">
+        <button disabled className="w-full rounded-xl bg-blue-600 py-3 text-white font-medium shadow disabled:opacity-60">⬇️ Download</button>
+      </div>
+
+      {/* Add modal (same as before, trimmed to keep short) */}
+      {open && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-white rounded-2xl p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <button className="text-blue-600" onClick={() => setOpen(false)}>Cancel</button>
+              <button className="text-blue-600 font-semibold" onClick={save}>Save</button>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium mb-1">Date & time</label>
+                <input type="datetime-local" className="w-full rounded-lg border px-3 py-2"
+                  value={isoToLocal(form.createdAt)} onChange={(e)=>setForm((f)=>({...f, createdAt: localToIso(e.target.value)}))}/>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium mb-1">Diagnosis</label>
+                <input className="w-full rounded-lg border px-3 py-2" placeholder="e.g., Tamponade"
+                  value={form.diagnosis ?? ''} onChange={(e)=>setForm((f)=>({...f, diagnosis: e.target.value}))}/>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Age</label>
+                <input type="number" className="w-full rounded-lg border px-3 py-2"
+                  value={form.age ?? ''} onChange={(e)=>setForm((f)=>({...f, age: e.target.value? Number(e.target.value): undefined}))}/>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Gender</label>
+                <div className="flex gap-2">
+                  {(['F','M','Other'] as Gender[]).map((g)=>(
+                    <button key={g} type="button"
+                      className={`px-3 py-2 rounded-full border ${form.gender===g?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}
+                      onClick={()=>setForm((f)=>({...f, gender:g}))}>{g}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">BMI</label>
+                <input type="number" step="0.1" className="w-full rounded-lg border px-3 py-2"
+                  value={form.bmi ?? ''} onChange={(e)=>setForm((f)=>({...f, bmi: e.target.value? Number(e.target.value): undefined}))}/>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium mb-1">Notes</label>
+                <textarea rows={3} className="w-full rounded-lg border px-3 py-2"
+                  value={form.notes ?? ''} onChange={(e)=>setForm((f)=>({...f, notes:e.target.value}))}/>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium mb-1">Comments</label>
+                <textarea rows={3} className="w-full rounded-lg border px-3 py-2"
+                  value={form.comments ?? ''} onChange={(e)=>setForm((f)=>({...f, comments:e.target.value}))}/>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+/* helpers */
+function isoToLocal(iso?: string) { if (!iso) return ''; const d=new Date(iso); const z=new Date(d.getTime()-d.getTimezoneOffset()*60000); return z.toISOString().slice(0,16); }
+function localToIso(local: string) { return local ? new Date(local).toISOString() : ''; }
+function ageGenderBmi(s: Scan) {
+  const age = s.age ? `${s.age}` : '';
+  const g = s.gender ?? '';
+  const ag = [age, g].filter(Boolean).join('');
+  const bmi = s.bmi ? ` BMI ${s.bmi}` : '';
+  return (ag || bmi) ? `${ag}${bmi}` : '—';
+}
+
+export default dynamic(() => Promise.resolve(LogbookClient), { ssr: false });
