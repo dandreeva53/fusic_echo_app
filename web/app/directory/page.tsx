@@ -1,79 +1,95 @@
 'use client';
+
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useState, useMemo } from 'react';
-
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { UserProfile } from '@/lib/users';
+import type { UserProfile } from '@/lib/users';
 
-const [users, setUsers] = useState<UserProfile[]>([]);
-
-useEffect(() => {
-  const qRef = query(collection(db, 'users'), orderBy('name'));
-  const unsub = onSnapshot(qRef, (snap) => {
-    const out: UserProfile[] = [];
-    snap.forEach((d) => out.push(d.data() as UserProfile));
-    setUsers(out);
-  });
-  return () => unsub();
-}, []);
-
-type User = {
-  name: string;
-  email: string;
-  role: 'Supervisor' | 'Fellow';
-  accreditations: string[];
-  about?: string;
-};
-
-export default function Directory() {
+export default function DirectoryPage() {
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [q, setQ] = useState('');
 
-  const filtered = useMemo(() => {
-    return MOCK.filter(u =>
-      [u.name, u.email].join(' ').toLowerCase().includes(q.toLowerCase())
-    );
-  }, [q]);
+  useEffect(() => {
+    const qRef = query(collection(db, 'users'), orderBy('name'));
+    const unsub = onSnapshot(qRef, (snap) => {
+      const out: UserProfile[] = [];
+      snap.forEach((d) => out.push(d.data() as UserProfile));
+      setUsers(out);
+    });
+    return () => unsub();
+  }, []);
 
-  const grouped = useMemo(() => {
-    return {
-      Supervisor: filtered.filter(u => u.role === 'Supervisor'),
-      Fellow: filtered.filter(u => u.role === 'Fellow'),
-    };
-  }, [filtered]);
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    const list = term
+      ? users.filter(
+          (u) =>
+            u.name.toLowerCase().includes(term) ||
+            u.email.toLowerCase().includes(term) ||
+            (u.role || '').toLowerCase().includes(term)
+        )
+      : users;
+    return list;
+  }, [users, q]);
+
+  const supervisors = filtered.filter((u) => u.role === 'Supervisor');
+  const fellows = filtered.filter((u) => u.role === 'Fellow');
 
   return (
-    <div>
-      <div className="bg-blue-500 text-white p-4">
-        <h1 className="text-lg font-semibold">ECHO group</h1>
-        <input
-          className="mt-2 w-full rounded-lg px-3 py-2 text-black"
-          placeholder="Search"
-          value={q}
-          onChange={e=>setQ(e.target.value)}
-        />
-      </div>
+    <div className="p-4">
+      <h1 className="text-xl font-semibold mb-3">ECHO group</h1>
+      <input
+        className="w-full rounded-lg border px-3 py-2 mb-4"
+        placeholder="Search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+      />
 
-      <div className="p-4 space-y-6">
-        {Object.entries(grouped).map(([role, users]) => (
-          <div key={role}>
-            <h2 className="text-sm font-semibold mb-2">{role}</h2>
-            <div className="space-y-3">
-              {users.map(u=>(
-                <Link key={u.email} href={`/directory/${encodeURIComponent(u.email)}`}>
-                  <div className="bg-white rounded-xl shadow px-4 py-3 flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{u.name}</div>
-                      <div className="text-sm text-gray-500">{u.email}</div>
-                    </div>
-                    <span className="text-gray-400">›</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
+      <Section title="Supervisor">
+        {supervisors.map((u) => (
+          <UserRow key={u.email} user={u} />
         ))}
-      </div>
+        {supervisors.length === 0 && <Empty />}
+      </Section>
+
+      <Section title="Fellow">
+        {fellows.map((u) => (
+          <UserRow key={u.email} user={u} />
+        ))}
+        {fellows.length === 0 && <Empty />}
+      </Section>
     </div>
   );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mb-6">
+      <h2 className="font-semibold mb-2">{title}</h2>
+      <div className="space-y-3">{children}</div>
+    </section>
+  );
+}
+
+function UserRow({ user }: { user: UserProfile }) {
+  return (
+    <Link
+      href={`/directory/${encodeURIComponent(user.email)}`}
+      className="block rounded-xl border p-3 hover:bg-gray-50"
+    >
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-lg bg-gray-200" />
+        <div className="flex-1">
+          <div className="font-semibold">{user.name}</div>
+          <div className="text-gray-600 text-sm">{user.email}</div>
+        </div>
+        <div className="text-gray-400 text-xl">›</div>
+      </div>
+    </Link>
+  );
+}
+
+function Empty() {
+  return <div className="text-gray-500 text-sm">No users</div>;
 }
