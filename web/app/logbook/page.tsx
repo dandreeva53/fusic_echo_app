@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Scan, Gender, listScans, addScan, seedIfEmpty } from './store';
+import { auth } from '@/lib/firebase';
+import { Scan, watchScans, addScanFB } from './fb';
 
 const TZ = 'Europe/London';
 const fmtDateTime = new Intl.DateTimeFormat('en-GB', {
@@ -17,8 +18,16 @@ function LogbookClient() {
   const [items, setItems] = useState<Scan[]>([]);
 
   useEffect(() => {
-    seedIfEmpty();
-    setItems(listScans());
+    const unsubAuth = auth.onAuthStateChanged(() => {
+      try {
+        const unsub = watchScans(setItems);
+        // clean up when user/logs out
+        return () => unsub();
+      } catch {
+        // not signed in; no-op
+      }
+    });
+    return () => unsubAuth();
   }, []);
 
   // modal state
@@ -37,22 +46,22 @@ function LogbookClient() {
     return filtered;
   }, [items, q]);
 
-  function save() {
+  async function save() {
     if (!form.diagnosis || !form.createdAt) return;
     const next: Scan = {
-      id: crypto.randomUUID(),
       createdAt: form.createdAt!,
       diagnosis: form.diagnosis!,
       age: form.age ? Number(form.age) : undefined,
-      gender: (form.gender as Gender) ?? 'Other',
+      gender: (form.gender as any) ?? 'Other',
       bmi: form.bmi ? Number(form.bmi) : undefined,
       notes: form.notes?.trim(),
       comments: form.comments?.trim(),
-    };
-    addScan(next);
-    setItems(listScans());
-    setOpen(false);
-  }
+      signatures: [],
+      };
+      await addScanFB(next);
+      setOpen(false);
+    }
+
 
   return (
     <div className="pb-20">

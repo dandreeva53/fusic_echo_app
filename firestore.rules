@@ -1,42 +1,21 @@
+// PROTOTYPE rules — tighten before production
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() { return request.auth != null; }
-    function isSelfEmail(email) { return isSignedIn() && request.auth.token.email == email; } // docs keyed by email
+    // Each user can read/write their own doc
+    match /users/{userEmail} {
+      allow read, write: if request.auth != null && request.auth.token.email == userEmail;
 
-    match /users/{email} {
-      allow read: if isSignedIn();
-      allow create, update: if isSelfEmail(email);
-    }
+      // Subcollection: scans
+      match /scans/{scanId} {
+        // Owner can do anything
+        allow read, write: if request.auth != null && request.auth.token.email == userEmail;
 
-    // Supervisors manage their own slots (keyed by supervisor's email)
-    match /schedules/{supervisorEmail}/slots/{slotId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isSelfEmail(supervisorEmail);
-    }
-
-    match /bookings/{bookingId} {
-      allow read: if isSignedIn();
-      // creation via Callable Function (bookSlot)
-      allow update, delete: if isSignedIn() &&
-        (request.resource.data.traineeId == request.auth.token.email || resource.data.traineeId == request.auth.token.email
-         || request.resource.data.supervisorId == request.auth.token.email || resource.data.supervisorId == request.auth.token.email);
-    }
-
-    match /logbookEntries/{entryId} {
-      allow read: if isSignedIn();
-      // Owner (trainee) can edit while unlocked; signatures/lock only via function
-      allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.token.email;
-      allow update: if isSignedIn() && resource.data.ownerUid == request.auth.token.email
-                    && !resource.data.locked
-                    && !request.resource.data.diff(resource.data).changedKeys().hasAny(['mentorSignature','supervisorSignature','locked']);
-      allow delete: if isSignedIn() && resource.data.ownerUid == request.auth.token.email && !resource.data.locked;
-    }
-
-    match /library/{docId} {
-      allow read: if true;
-      allow create, update, delete: if false; // change if you want in-app edits
+        // Supervisors can append signatures (example: any authenticated user allowed for prototype)
+        allow update: if request.auth != null
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['signatures']);
+      }
     }
   }
 }

@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "staging": "fusic-echo"
+  },
+  "targets": {},
+  "etags": {}
+}
