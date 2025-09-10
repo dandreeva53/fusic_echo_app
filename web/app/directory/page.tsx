@@ -2,6 +2,22 @@
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 
+import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { UserProfile } from '@/lib/users';
+
+const [users, setUsers] = useState<UserProfile[]>([]);
+
+useEffect(() => {
+  const qRef = query(collection(db, 'users'), orderBy('name'));
+  const unsub = onSnapshot(qRef, (snap) => {
+    const out: UserProfile[] = [];
+    snap.forEach((d) => out.push(d.data() as UserProfile));
+    setUsers(out);
+  });
+  return () => unsub();
+}, []);
+
 type User = {
   name: string;
   email: string;
@@ -9,13 +25,6 @@ type User = {
   accreditations: string[];
   about?: string;
 };
-
-const MOCK: User[] = [
-  { name: 'Bob Peters', email: 'bob@uclh.nhs.uk', role: 'Supervisor', accreditations: ['FUSIC','BSE Level 1'] },
-  { name: 'Melanie Biggs', email: 'd.2204.a@gmail.com', role: 'Supervisor', accreditations: [] },
-  { name: 'Carol Smith', email: 'carol@uclh.nhs.uk', role: 'Fellow', accreditations: ['FUSIC'] },
-  { name: 'Daria', email: 'd.andreeva171@gmail.com', role: 'Fellow', accreditations: [] },
-];
 
 export default function Directory() {
   const [q, setQ] = useState('');

@@ -1,45 +1,51 @@
 'use client';
+
 import { useEffect, useState } from 'react';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import Link from 'next/link';
+import { auth } from '@/lib/firebase';
+import { UserProfile, watchMyProfile } from '@/lib/users';
 
 export default function Profile() {
-  const [me, setMe] = useState<any>(null);
-  const email = auth.currentUser?.email?.toLowerCase() || '';
+  const [me, setMe] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    if (!email) return;
-    getDoc(doc(db, 'users', email)).then(s => setMe({ id: email, ...s.data() }));
-  }, [email]);
+    const unsubAuth = auth.onAuthStateChanged((u) => {
+      if (!u) { setMe(null); return; }
+      const unsub = watchMyProfile(setMe);
+      return () => unsub();
+    });
+    return () => unsubAuth();
+  }, []);
 
-  const save = async () => {
-    if (!email) return;
-    await setDoc(doc(db, 'users', email), me, { merge: true });
-    alert('Saved');
-  };
-
-  if (!email) return <p>Please sign in.</p>;
-  if (!me) return <p>Loading…</p>;
+  if (!me) {
+    return (
+      <div className="p-6">
+        <p className="mb-3">You’re not signed in.</p>
+        <Link href="/login" className="text-blue-600 underline">Sign in</Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="card space-y-3">
-      <h2 className="text-lg font-semibold">Your profile</h2>
-      <label className="label">Name</label>
-      <input className="input" value={me.name||''} onChange={e=>setMe({...me, name:e.target.value})} />
+    <div className="max-w-2xl mx-auto p-6">
+      <div className="flex items-center gap-4">
+        <div className="h-20 w-20 rounded-full bg-gray-200" />
+        <div>
+          <h1 className="text-2xl font-bold">{me.name}</h1>
+          <div className="text-gray-600">{me.email}</div>
+        </div>
+      </div>
 
-      <label className="label">Role</label>
-      <select className="input" value={me.role||'fellow'} onChange={e=>setMe({...me, role:e.target.value})}>
-        <option value="fellow">Fellow (trainee)</option>
-        <option value="supervisor">Supervisor</option>
-      </select>
+      <div className="mt-6 space-y-2">
+        <div><span className="font-medium">Role:</span> {me.role}</div>
+        <div><span className="font-medium">Accreditations:</span> {me.accreditations.join(', ') || '—'}</div>
+        <div><span className="font-medium">About me:</span> {me.about || '—'}</div>
+      </div>
 
-      <fieldset className="grid grid-cols-3 gap-2">
-        <label className="flex items-center gap-2"><input type="checkbox" checked={me.accreditations?.fusic||false} onChange={e=>setMe({...me, accreditations:{...me.accreditations, fusic:e.target.checked}})} />FUSIC</label>
-        <label className="flex items-center gap-2"><input type="checkbox" checked={me.accreditations?.bseL1||false} onChange={e=>setMe({...me, accreditations:{...me.accreditations, bseL1:e.target.checked}})} />BSE L1</label>
-        <label className="flex items-center gap-2"><input type="checkbox" checked={me.accreditations?.bseL2||false} onChange={e=>setMe({...me, accreditations:{...me.accreditations, bseL2:e.target.checked}})} />BSE L2</label>
-      </fieldset>
-
-      <button className="btn" onClick={save}>Save</button>
+      <Link href="/profile/edit" className="mt-6 inline-block rounded-xl bg-blue-600 text-white py-3 px-4 font-semibold">
+        Edit profile
+      </Link>
     </div>
   );
 }
+
