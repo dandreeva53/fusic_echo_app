@@ -47,20 +47,22 @@ function LogbookClient() {
   }, [items, q]);
 
   async function save() {
-    if (!form.diagnosis || !form.createdAt) return;
-    const next: Scan = {
-      createdAt: form.createdAt!,
-      diagnosis: form.diagnosis!,
-      age: form.age ? Number(form.age) : undefined,
-      gender: (form.gender as any) ?? 'Other',
-      bmi: form.bmi ? Number(form.bmi) : undefined,
-      notes: form.notes?.trim(),
-      comments: form.comments?.trim(),
-      signatures: [],
-      };
-      await addScanFB(next);
-      setOpen(false);
-    }
+  if (!form.diagnosis || !form.createdAt) return;
+
+  const next: Scan = {
+    createdAt: form.createdAt!,
+    diagnosis: form.diagnosis!.trim(),
+    age: form.age !== undefined && form.age !== null ? Number(form.age) : undefined,
+    gender: (form.gender as any) ?? 'Other',
+    bmi: form.bmi !== undefined && form.bmi !== null ? Number(form.bmi) : undefined,
+    notes: form.notes?.trim() || null,            // ← null instead of undefined
+    comments: form.comments?.trim() || null,      // ← null instead of undefined
+    signatures: [],
+  };
+
+  await addScanFB(next);      // fb.ts will also strip undefined just in case
+  setOpen(false);
+  }
 
 
   return (

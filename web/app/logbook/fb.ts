@@ -6,6 +6,11 @@ import {
   serverTimestamp, setDoc, query, orderBy
 } from 'firebase/firestore';
 
+function stripUndefined<T>(obj: T): T {
+  // JSON.stringify drops undefined values recursively
+  return JSON.parse(JSON.stringify(obj));
+}
+
 export type YesNoUA = 'Yes' | 'No' | 'U/A';
 export type Gender = 'M' | 'F' | 'Other';
 export type ImageQuality = 'Good' | 'Acceptable' | 'Poor';
@@ -68,12 +73,14 @@ export function watchScans(cb: (scans: Scan[]) => void) {
 
 export async function addScanFB(scan: Scan) {
   const email = requireEmail();
-  await addDoc(userScansCol(email), scan);
+  const cleaned = stripUndefined(scan);
+  await addDoc(userScansCol(email), cleaned as any);
 }
 
 export async function updateScanFB(scanId: string, patch: Partial<Scan>) {
   const email = requireEmail();
-  await updateDoc(doc(db, 'users', email, 'scans', scanId), patch as any);
+  const cleaned = stripUndefined(patch);
+  await updateDoc(doc(db, 'users', email, 'scans', scanId), cleaned as any);
 }
 
 export async function deleteScanFB(scanId: string) {
