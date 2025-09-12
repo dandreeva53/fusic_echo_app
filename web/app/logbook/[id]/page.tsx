@@ -63,7 +63,7 @@ function DetailClient() {
     if (!scan) return;
     const u = auth.currentUser;
     if (!u || !u.email) { alert('You must be signed in to sign.'); return; }
-    const dataUrl = sigRef.current?.getTrimmedCanvas().toDataURL('image/png') ?? '';
+    const dataUrl = sigRef.current?.getCanvas().toDataURL('image/png') ?? '';
     if (!dataUrl) { alert('Please add a signature.'); return; }
 
     const sig = {
