@@ -1,20 +1,20 @@
-// PROTOTYPE rules — tighten before production
+// SAFE default for prototype: directory is readable to any signed-in user.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Each user can read/write their own doc
     match /users/{userEmail} {
-      allow read, write: if request.auth != null && request.auth.token.email == userEmail;
+      // Directory needs this:
+      allow read: if request.auth != null;
 
-      // Subcollection: scans
+      // Only the owner can write their own profile
+      allow create, update, delete: if request.auth != null
+                                    && request.auth.token.email == userEmail;
+
+      // Trainee scans: owner-only access (we can relax for signatures later)
       match /scans/{scanId} {
-        // Owner can do anything
-        allow read, write: if request.auth != null && request.auth.token.email == userEmail;
-
-        // Supervisors can append signatures (example: any authenticated user allowed for prototype)
-        allow update: if request.auth != null
-                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['signatures']);
+        allow read, create, update, delete: if request.auth != null
+                                            && request.auth.token.email == userEmail;
       }
     }
   }
