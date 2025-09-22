@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-gray-50 text-gray-900">
         <div className="max-w-5xl mx-auto p-4">
           <header className="flex items-center justify-between py-4">
-            <h1 className="text-xl font-semibold">FUSIC Echo</h1>
+            <h1 className="text-xl font-semibold">FUSIC Echo ?</h1>
             <nav className="flex gap-3 text-sm">
               <a href="/login">Login</a>
               <a href="/profile">Profile</a>
