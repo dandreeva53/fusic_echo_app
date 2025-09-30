@@ -3,10 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
-import { Accreditation, Role, UserProfile, createOrUpdateProfile, watchMyProfile } from '@/lib/users';
-
-const ROLES: Role[] = ['Supervisor', 'Fellow'];
-const ACCS: Accreditation[] = ['FUSIC', 'BSE Level 1', 'BSE Level 2'];
+import { createOrUpdateProfile, watchMyProfile } from '@/lib/users';
+import type { Accreditation, Role, UserProfile } from '@/types';
+import { ROLES, ACCREDITATIONS } from '@/lib/constants';
 
 export default function EditProfile() {
   const r = useRouter();
@@ -63,7 +62,7 @@ export default function EditProfile() {
         <div>
           <label className="block text-sm font-medium mb-1">Accreditations</label>
           <div className="flex flex-wrap gap-2">
-            {ACCS.map(a => {
+            {ACCREDITATIONS.map(a => {
               const on = me.accreditations.includes(a);
               return (
                 <button key={a} type="button"

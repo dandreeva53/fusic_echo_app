@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { getProfileByEmail, type UserProfile } from '@/lib/users';
+import { getProfileByEmail } from '@/lib/users';
+import type { UserProfile } from '@/types';
 
 export default function UserDetail() {
   const { email } = useParams<{ email: string }>();

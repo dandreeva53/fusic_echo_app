@@ -5,13 +5,8 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { auth } from '@/lib/firebase';
 import { Scan, watchScans, addScanFB } from './fb';
-
-const TZ = 'Europe/London';
-const fmtDateTime = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit', month: '2-digit', year: 'numeric',
-  hour: '2-digit', minute: '2-digit', second: '2-digit',
-  hour12: false, timeZone: TZ,
-});
+import { formatters, isoToLocal, localToIso } from '@/lib/dateUtils';
+import { GENDERS } from '@/lib/constants';
 
 function LogbookClient() {
   const [q, setQ] = useState('');
@@ -90,7 +85,7 @@ function LogbookClient() {
       <div className="divide-y">
         {list.map((s, i) => (
           <Link key={s.id} href={`/logbook/${s.id}`} className="block p-4 hover:bg-gray-50">
-            <div className="text-sm text-blue-600">{fmtDateTime.format(new Date(s.createdAt))}</div>
+            <div className="text-sm text-blue-600">{formatters.dateTime.format(new Date(s.createdAt))}</div>
 
             <div className="mt-1 flex items-start gap-3">
               <div className="mt-1 text-gray-400 select-none">{i + 1}.</div>
@@ -142,7 +137,7 @@ function LogbookClient() {
               <div>
                 <label className="block text-sm font-medium mb-1">Gender</label>
                 <div className="flex gap-2">
-                  {(['F','M','Other'] as Gender[]).map((g)=>(
+                  {GENDERS.map((g)=>(
                     <button key={g} type="button"
                       className={`px-3 py-2 rounded-full border ${form.gender===g?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}
                       onClick={()=>setForm((f)=>({...f, gender:g}))}>{g}</button>
@@ -176,8 +171,6 @@ function LogbookClient() {
 }
 
 /* helpers */
-function isoToLocal(iso?: string) { if (!iso) return ''; const d=new Date(iso); const z=new Date(d.getTime()-d.getTimezoneOffset()*60000); return z.toISOString().slice(0,16); }
-function localToIso(local: string) { return local ? new Date(local).toISOString() : ''; }
 function ageGenderBmi(s: Scan) {
   const age = s.age ? `${s.age}` : '';
   const g = s.gender ?? '';

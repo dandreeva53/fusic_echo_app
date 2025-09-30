@@ -7,13 +7,8 @@ import dynamic from 'next/dynamic';
 import SignatureCanvas from 'react-signature-canvas';
 import { auth } from '@/lib/firebase';
 import { Scan, getScanOnce, updateScanFB, deleteScanFB } from '../fb';
-
-const TZ = 'Europe/London';
-const fmtDateTime = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit', month: '2-digit', year: 'numeric',
-  hour: '2-digit', minute: '2-digit', second: '2-digit',
-  hour12: false, timeZone: TZ,
-});
+import { formatters, isoToLocal, localToIso } from '@/lib/dateUtils';
+import { GENDERS, VIEWS, IMAGE_QUALITIES, YES_NO_UA } from '@/lib/constants';
 
 function DetailClient() {
   const params = useParams<{ id: string }>();
@@ -93,7 +88,7 @@ function DetailClient() {
           <div>
             <div className="text-lg font-semibold">Scan Record</div>
             <div className="text-sm opacity-90">
-              {scan.diagnosis} — {fmtDateTime.format(new Date(scan.createdAt))}
+              {scan.diagnosis} — {formatters.dateTime.format(new Date(scan.createdAt))}
             </div>
           </div>
         </div>
@@ -110,7 +105,7 @@ function DetailClient() {
       {/* Summary */}
       <Section title="Summary">
         <Row k="User Email" v="you@example.com" />
-        <Row k="Date" v={fmtDateTime.format(new Date(scan.createdAt))} />
+        <Row k="Date" v={formatters.dateTime.format(new Date(scan.createdAt))} />
         <Row k="Age" v={toStr(scan.age)} />
         <Row k="Gender" v={toStr(scan.gender)} />
         <Row k="Diagnosis" v={toStr(scan.diagnosis)} />
@@ -251,7 +246,7 @@ function EditModal({
             value={form.age ?? ''} onChange={(e)=>setForm((f)=>({...f, age: e.target.value? Number(e.target.value): undefined}))}/></Field>
           <Field label="Gender">
             <div className="flex gap-2">
-              {(['F','M','Other'] as const).map((g)=>(
+              {GENDERS.map((g)=>(
                 <button key={g} type="button"
                   className={`px-3 py-2 rounded-full border ${form.gender===g?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}
                   onClick={()=>setForm((f)=>({...f, gender:g}))}>{g}</button>
@@ -282,7 +277,7 @@ function EditModal({
 
         <Field label="Views">
           <div className="flex flex-wrap gap-2">
-            {(['PLAX','PSAX','AP4C','SC4C','IVC'] as const).map(v=>(
+            {VIEWS.map(v=>(
               <button key={v} type="button"
                 className={`px-3 py-1 rounded-full border ${form.views?.includes(v)?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}
                 onClick={()=>setForm((f)=> {
@@ -298,7 +293,7 @@ function EditModal({
 
         <Field label="Image quality">
           <div className="flex gap-2">
-            {(['Good','Acceptable','Poor'] as const).map(q=>(
+            {IMAGE_QUALITIES.map(q=>(
               <button key={q} className={`px-3 py-1 rounded-full border ${form.imageQuality===q?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}
                 onClick={()=>setForm((f)=>({...f, imageQuality:q}))}>{q}</button>
             ))}
@@ -344,7 +339,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function TriToggle({ value, onChange }: { value?: 'Yes' | 'No' | 'U/A'; onChange: (v: 'Yes' | 'No' | 'U/A') => void }) {
   return (
     <div className="flex gap-2">
-      {(['Yes','No','U/A'] as const).map(v=>(
+      {YES_NO_UA.map(v=>(
         <button key={v} className={`px-3 py-1 rounded-full border ${value===v?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}
           onClick={()=>onChange(v)}>{v}</button>
       ))}
@@ -352,8 +347,6 @@ function TriToggle({ value, onChange }: { value?: 'Yes' | 'No' | 'U/A'; onChange
   );
 }
 function toStr(x: any) { return x ?? '—'; }
-function isoToLocal(iso?: string) { if (!iso) return ''; const d=new Date(iso); const z=new Date(d.getTime()-d.getTimezoneOffset()*60000); return z.toISOString().slice(0,16); }
-function localToIso(local: string) { return local ? new Date(local).toISOString() : ''; }
 function buildCopyText(s: Scan) {
   const lines = [
     `Scan Record — ${s.diagnosis} — ${new Date(s.createdAt).toLocaleString('en-GB')}`,

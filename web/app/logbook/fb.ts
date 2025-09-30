@@ -1,5 +1,6 @@
 'use client';
 
+import type { Scan, YesNoUA, Gender, ImageQuality } from '@/types';
 import { auth, db } from '@/lib/firebase';
 import {
   collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc,
@@ -10,46 +11,6 @@ function stripUndefined<T>(obj: T): T {
   // JSON.stringify drops undefined values recursively
   return JSON.parse(JSON.stringify(obj));
 }
-
-export type YesNoUA = 'Yes' | 'No' | 'U/A';
-export type Gender = 'M' | 'F' | 'Other';
-export type ImageQuality = 'Good' | 'Acceptable' | 'Poor';
-
-export type Scan = {
-  id?: string;
-  createdAt: string; // ISO
-  diagnosis: string;
-  age?: number;
-  gender?: Gender;
-  bmi?: number;
-  notes?: string;
-  comments?: string;
-
-  indications?: string;
-  ventilation?: string;
-  hr?: string;
-  bp?: string;
-  cvp?: string;
-  cvSupport?: string;
-  views?: ('PLAX' | 'PSAX' | 'AP4C' | 'SC4C' | 'IVC')[];
-  imageQuality?: ImageQuality;
-
-  lvDilated?: YesNoUA;
-  lvImpaired?: YesNoUA;
-  lowPreload?: YesNoUA;
-  pericardialFluid?: YesNoUA;
-  pleuralFluid?: YesNoUA;
-
-  findingsSummary?: string;
-
-  signatures?: Array<{
-    byEmail: string;
-    byName: string;
-    at: string;          // ISO
-    imageDataUrl: string;
-    note?: string;
-  }>;
-};
 
 export function requireEmail(): string {
   const u = auth.currentUser;

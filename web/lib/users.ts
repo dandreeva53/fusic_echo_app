@@ -1,23 +1,10 @@
 'use client';
 
+import type { Role, Accreditation, UserProfile } from '@/types';
 import { auth, db } from '@/lib/firebase';
 import {
   doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp,
 } from 'firebase/firestore';
-
-export type Role = 'Supervisor' | 'Fellow';
-export type Accreditation = 'FUSIC' | 'BSE Level 1' | 'BSE Level 2';
-
-export type UserProfile = {
-  email: string;
-  name: string;
-  role: Role;
-  accreditations: Accreditation[];
-  about?: string;
-  photoURL?: string;
-  createdAt?: any;
-  updatedAt?: any;
-};
 
 export async function createOrUpdateProfile(p: UserProfile) {
   const ref = doc(db, 'users', p.email);

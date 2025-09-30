@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { Accreditation, Role, UserProfile, createOrUpdateProfile } from '@/lib/users';
+import { createOrUpdateProfile } from '@/lib/users';
+import type { Accreditation, Role, UserProfile } from '@/types';
 
-const ROLES: Role[] = ['Supervisor', 'Fellow'];
-const ACCS: Accreditation[] = ['FUSIC', 'BSE Level 1', 'BSE Level 2'];
+import { ROLES, ACCREDITATIONS } from '@/lib/constants';
 
 export default function Signup() {
   const r = useRouter();
@@ -75,7 +75,7 @@ export default function Signup() {
         <div>
           <label className="block text-sm font-medium mb-1">Accreditations</label>
           <div className="flex flex-wrap gap-2">
-            {ACCS.map(a => (
+            {ACCREDITATIONS.map(a => (
               <button type="button" key={a}
                 onClick={()=>toggleAcc(a)}
                 className={`px-3 py-1 rounded-full border ${accs.includes(a)?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}>

@@ -6,6 +6,9 @@ const FullCalendar = dynamic(() => import('@fullcalendar/react'), { ssr: false }
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg, DateSelectArg, EventClickArg } from '@fullcalendar/interaction';
+import { formatters, withOrdinal, TZ } from '@/lib/dateUtils';
+import type { Status, Location, Slot } from '@/types';
+import { STATUSES, LOCATIONS, STATUS_LABELS, SAMPLE_SUPERVISORS } from '@/lib/constants';
 
 // robust way to get the CalendarApi regardless of ref shape
 function getApiFromRef(ref: any) {
@@ -15,30 +18,10 @@ function getApiFromRef(ref: any) {
 }
 
 /* ---------- types ---------- */
-type Status = 'available' | 'unavailable' | 'oncall';
-type Location = 'UCLH' | 'WMS' | 'GWB';
-type Slot = {
-  id: string;
-  supervisor: string;
-  status: Status;
-  location: Location;
-  start: string;
-  end: string;
-  capacity: number;
-  bookings: number;
-};
+
 
 /* ---------- constants & formatters ---------- */
-const TZ = 'Europe/London';
-const fmtTime = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: TZ });
-const fmtTitle = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric', timeZone: TZ });
-const fmtListDate = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: TZ });
-const fmtAxis = new Intl.DateTimeFormat('en-GB', {
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false,
-  timeZone: TZ,
-});
+
 
 /* ---------- page component (client only) ---------- */
 function AvailabilityClient() {
@@ -62,7 +45,7 @@ const events = useMemo(() => {
     id: s.id,
     start: s.start,
     end: s.end,
-    title: `${fmtTime.format(new Date(s.start))} ${cap(emailToName(s.supervisor))}`,
+    title: `${formatters.time.format(new Date(s.start))} ${cap(emailToName(s.supervisor))}`,
     color: s.status === 'available' ? '#16a34a' : s.status === 'oncall' ? '#f59e0b' : '#ef4444', // bg+border
     textColor: 'white',
   }));
@@ -79,7 +62,7 @@ const events = useMemo(() => {
     const s = slots.find((x) => x.id === arg.event.id); if (!s) return;
     setEditingId(s.id); setForm({ ...s }); setOpen(true);
   }
-  function datesSet(arg: any) { setViewTitle(fmtTitle.format(arg.view.currentStart)); }
+  function datesSet(arg: any) { setViewTitle(formatters.title.format(arg.view.currentStart)); }
 
 
   // modal state + CRUD
@@ -151,7 +134,7 @@ const events = useMemo(() => {
           /* ✅ 24h slot labels in week/day views */
           slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
           /* 24h axis labels forced to Europe/London */
-          slotLabelContent={(arg) => fmtAxis.format(arg.date)}
+          slotLabelContent={(arg) => formatters.axis.format(arg.date)}
 
           /* handlers (unchanged) */
           dateClick={onDateClick}
@@ -168,9 +151,9 @@ const events = useMemo(() => {
           const left = s.capacity - s.bookings; const disabled = left<=0;
           return (
             <div key={s.id} className="bg-white rounded-xl shadow px-4 py-3">
-              <div className="text-sm text-gray-700">{withOrdinal(fmtListDate, new Date(s.start))}</div>
-              <div className="font-semibold">{fmtTime.format(new Date(s.start))} - {fmtTime.format(new Date(s.end))}</div>
-              <div className="text-sm text-gray-700">{cap(emailToName(s.supervisor))} — {statusLabel(s.status)}</div>
+              <div className="text-sm text-gray-700">{withOrdinal(formatters.listDate, new Date(s.start))}</div>
+              <div className="font-semibold">{formatters.time.format(new Date(s.start))} - {formatters.time.format(new Date(s.end))}</div>
+              <div className="text-sm text-gray-700">{cap(emailToName(s.supervisor))} — {STATUS_LABELS[s.status]}</div>
               <div className="mt-1 flex items-center justify-between">
                 <div className="text-sm text-gray-600">{s.location}</div>
                 <button className="btn" disabled={disabled} onClick={()=>book(s.id)}>{disabled?'Full':'Book'}</button>
@@ -189,11 +172,11 @@ const events = useMemo(() => {
             </div>
 
             <div className="space-x-2">
-              {(['available','unavailable','oncall'] as Status[]).map((s)=>(
+              {STATUSES.map((s)=>(
                 <button key={s}
                   className={`px-3 py-1 rounded-full border ${form.status===s?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}
                   onClick={()=>setForm((f)=>({...f, status:s}))}>
-                  {statusLabel(s)}
+                  {STATUS_LABELS[s]}
                 </button>
               ))}
             </div>
@@ -201,7 +184,7 @@ const events = useMemo(() => {
             <div>
               <div className="font-medium mb-1">Location</div>
               <div className="space-x-2">
-                {(['UCLH','WMS','GWB'] as Location[]).map((loc)=>(
+                {LOCATIONS.map((loc)=>(
                   <button key={loc}
                     className={`px-3 py-1 rounded-full border ${form.location===loc?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}
                     onClick={()=>setForm((f)=>({...f, location:loc}))}>
@@ -229,7 +212,7 @@ const events = useMemo(() => {
             <div>
               <div className="font-medium mb-1">Person</div>
               <div className="flex flex-wrap gap-2">
-                {['bob@uclh.nhs.uk','carol@uclh.nhs.uk','melanie@uclh.nhs.uk','daria@uclh.nhs.uk'].map((p)=>(
+                {SAMPLE_SUPERVISORS.map((p)=>(
                   <button key={p}
                     className={`px-3 py-1 rounded-full border ${form.supervisor===p?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}
                     onClick={()=>setForm((f)=>({...f, supervisor:p}))}>
@@ -265,13 +248,6 @@ function addHours(d: Date, h: number) { const n = new Date(d); n.setHours(n.getH
 function toIsoLocal(d: Date) { return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString(); }
 function isoToLocal(iso?: string) { if (!iso) return ''; const d = new Date(iso); const z = new Date(d.getTime()-d.getTimezoneOffset()*60000); return z.toISOString().slice(0,16); }
 function localToIso(local: string) { return local ? new Date(local).toISOString() : ''; }
-function statusLabel(s: Status) { return s==='available'?'Available to supervise': s==='oncall'?'On-call':'Unavailable'; }
-function withOrdinal(baseFmt: Intl.DateTimeFormat, date: Date) {
-  const day = parseInt(new Intl.DateTimeFormat('en-GB', { day:'numeric', timeZone: TZ }).format(date), 10);
-  const ord = (n:number)=>(n%10===1&&n%100!==11?'st':n%10===2&&n%100!==12?'nd':n%10===3&&n%100!==13?'rd':'th');
-  const parts = baseFmt.formatToParts(date);
-  return parts.map(p=> p.type==='day' ? `${day}${ord(day)}` : p.value).join('');
-}
 function mkSlot(supervisor: string, status: Status, location: Location, cap: number, booked: number, startH: number, endH: number): Slot {
   const d = new Date(); d.setHours(0,0,0,0);
   const start = new Date(d); start.setHours(startH,0,0,0);
