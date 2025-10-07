@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getProfileByEmail } from '@/lib/users';
 import type { UserProfile } from '@/types';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function UserDetail() {
   const { email } = useParams<{ email: string }>();
@@ -14,7 +15,7 @@ export default function UserDetail() {
     (async () => setU(await getProfileByEmail(decodeURIComponent(email))))();
   }, [email]);
 
-  if (!u) return <div className="p-4">Loading…</div>;
+  if (!u) return <LoadingSpinner message="Loading profile..." />;
 
   return (
     <div className="p-4 space-y-4">

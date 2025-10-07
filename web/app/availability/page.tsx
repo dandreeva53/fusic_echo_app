@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 const FullCalendar = dynamic(() => import('@fullcalendar/react'), { ssr: false });
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -8,7 +8,11 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin, { DateClickArg, DateSelectArg, EventClickArg } from '@fullcalendar/interaction';
 import { formatters, withOrdinal, TZ } from '@/lib/dateUtils';
 import type { Status, Location, Slot } from '@/types';
-import { STATUSES, LOCATIONS, STATUS_LABELS, SAMPLE_SUPERVISORS } from '@/lib/constants';
+import { STATUSES, LOCATIONS, STATUS_LABELS } from '@/lib/constants';
+import { emailToName, capitalize, addHours } from '@/lib/utils';
+import { auth, db } from '@/lib/firebase';
+import { collection, onSnapshot, query as firestoreQuery, orderBy } from 'firebase/firestore';
+import type { UserProfile } from '@/types';
 
 // robust way to get the CalendarApi regardless of ref shape
 function getApiFromRef(ref: any) {
@@ -25,14 +29,33 @@ function getApiFromRef(ref: any) {
 
 /* ---------- page component (client only) ---------- */
 function AvailabilityClient() {
-  const [slots, setSlots] = useState<Slot[]>([
-    mkSlot('bob@uclh.nhs.uk', 'available', 'UCLH', 2, 0, 9, 10),
-    mkSlot('carol@uclh.nhs.uk', 'oncall', 'WMS', 1, 0, 10, 11),
-    mkSlot('melanie@uclh.nhs.uk', 'unavailable', 'GWB', 1, 0, 13, 14),
-  ]);
+  const [slots, setSlots] = useState<Slot[]>([]);
   const [query, setQuery] = useState('');
   const calRef = useRef<any>(null);
   const [viewTitle, setViewTitle] = useState<string>('');
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+
+  // Load all users from Firebase
+  useEffect(() => {
+  const qRef = firestoreQuery(collection(db, 'users'), orderBy('name'));
+  const unsub = onSnapshot(qRef, (snap) => {
+      const loadedUsers: UserProfile[] = [];
+      snap.forEach((d) => loadedUsers.push(d.data() as UserProfile));
+      setUsers(loadedUsers);
+    });
+    return () => unsub();
+  }, []);
+
+  // Get current user email
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((user) => {
+      if (user?.email) {
+        setCurrentUserEmail(user.email);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   const filterFn = (s: Slot) => {
     if (!query.trim()) return true;
@@ -45,7 +68,7 @@ const events = useMemo(() => {
     id: s.id,
     start: s.start,
     end: s.end,
-    title: `${formatters.time.format(new Date(s.start))} ${cap(emailToName(s.supervisor))}`,
+    title: `${formatters.time.format(new Date(s.start))} ${capitalize(emailToName(s.supervisor))}`,
     color: s.status === 'available' ? '#16a34a' : s.status === 'oncall' ? '#f59e0b' : '#ef4444', // bg+border
     textColor: 'white',
   }));
@@ -71,10 +94,19 @@ const events = useMemo(() => {
   const [form, setForm] = useState<Partial<Slot>>({ status: 'available', location: 'UCLH', capacity: 2 });
 
   function openCreate(startISO: string, endISO?: string) {
-    setEditingId(null);
-    setForm({ supervisor: 'carol@uclh.nhs.uk', status: 'available', location: 'UCLH', start: startISO, end: endISO || toIsoLocal(addHours(new Date(startISO), 1)), capacity: 2, bookings: 0 });
-    setOpen(true);
+  setEditingId(null);
+  setForm({ 
+    supervisor: currentUserEmail || users[0]?.email || '', // Use current user as default
+    status: 'available', 
+    location: 'UCLH', 
+    start: startISO, 
+    end: endISO || toIsoLocal(addHours(new Date(startISO), 1)), 
+    capacity: 2, 
+    bookings: 0 
+  });
+  setOpen(true);
   }
+
   function saveSlot() {
     if (!form.start || !form.end || !form.supervisor || !form.status || !form.location || !form.capacity) return;
     if (editingId) {
@@ -153,7 +185,7 @@ const events = useMemo(() => {
             <div key={s.id} className="bg-white rounded-xl shadow px-4 py-3">
               <div className="text-sm text-gray-700">{withOrdinal(formatters.listDate, new Date(s.start))}</div>
               <div className="font-semibold">{formatters.time.format(new Date(s.start))} - {formatters.time.format(new Date(s.end))}</div>
-              <div className="text-sm text-gray-700">{cap(emailToName(s.supervisor))} — {STATUS_LABELS[s.status]}</div>
+              <div className="text-sm text-gray-700">{capitalize(emailToName(s.supervisor))} — {STATUS_LABELS[s.status]}</div>
               <div className="mt-1 flex items-center justify-between">
                 <div className="text-sm text-gray-600">{s.location}</div>
                 <button className="btn" disabled={disabled} onClick={()=>book(s.id)}>{disabled?'Full':'Book'}</button>
@@ -211,15 +243,20 @@ const events = useMemo(() => {
 
             <div>
               <div className="font-medium mb-1">Person</div>
-              <div className="flex flex-wrap gap-2">
-                {SAMPLE_SUPERVISORS.map((p)=>(
-                  <button key={p}
-                    className={`px-3 py-1 rounded-full border ${form.supervisor===p?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}
-                    onClick={()=>setForm((f)=>({...f, supervisor:p}))}>
-                    {cap(emailToName(p))}
-                  </button>
-                ))}
-              </div>
+              {users.length === 0 ? (
+                <p className="text-sm text-gray-500">Loading users...</p>
+              ) : (
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                  {users.map((user)=>(
+                    <button key={user.email} type="button"
+                      className={`px-3 py-1 rounded-full border ${form.supervisor===user.email?'bg-blue-50 border-blue-400 text-blue-700':'bg-white'}`}
+                      onClick={()=>setForm((f)=>({...f, supervisor:user.email}))}>
+                      {user.name}
+                      {user.email === currentUserEmail && ' (You)'}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
@@ -242,9 +279,6 @@ const events = useMemo(() => {
 }
 
 /* ---------- helpers ---------- */
-function emailToName(email: string) { return email.split('@')[0].replace('.', ' '); }
-function cap(s: string) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
-function addHours(d: Date, h: number) { const n = new Date(d); n.setHours(n.getHours()+h); return n; }
 function toIsoLocal(d: Date) { return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString(); }
 function isoToLocal(iso?: string) { if (!iso) return ''; const d = new Date(iso); const z = new Date(d.getTime()-d.getTimezoneOffset()*60000); return z.toISOString().slice(0,16); }
 function localToIso(local: string) { return local ? new Date(local).toISOString() : ''; }

@@ -9,6 +9,8 @@ import { auth } from '@/lib/firebase';
 import { Scan, getScanOnce, updateScanFB, deleteScanFB } from '../fb';
 import { formatters, isoToLocal, localToIso } from '@/lib/dateUtils';
 import { GENDERS, VIEWS, IMAGE_QUALITIES, YES_NO_UA } from '@/lib/constants';
+import { toStr } from '@/lib/utils';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 function DetailClient() {
   const params = useParams<{ id: string }>();
@@ -32,7 +34,7 @@ function DetailClient() {
     })();
   }, [params.id, router]);
 
-  if (!scan) return null;
+  if (!scan) return <LoadingSpinner message="Loading scan record..." />;
 
   async function doSave() {
     await updateScanFB(scan.id!, form);
@@ -346,7 +348,6 @@ function TriToggle({ value, onChange }: { value?: 'Yes' | 'No' | 'U/A'; onChange
     </div>
   );
 }
-function toStr(x: any) { return x ?? '—'; }
 function buildCopyText(s: Scan) {
   const lines = [
     `Scan Record — ${s.diagnosis} — ${new Date(s.createdAt).toLocaleString('en-GB')}`,

@@ -6,6 +6,7 @@ import { auth } from '@/lib/firebase';
 import { createOrUpdateProfile, watchMyProfile } from '@/lib/users';
 import type { Accreditation, Role, UserProfile } from '@/types';
 import { ROLES, ACCREDITATIONS } from '@/lib/constants';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 export default function EditProfile() {
   const r = useRouter();
@@ -37,7 +38,7 @@ export default function EditProfile() {
     }
   }
 
-  if (!me) return <div className="p-6">Loading…</div>;
+  if (!me) return <LoadingSpinner message="Loading profile..." />;
 
   return (
     <div className="max-w-2xl mx-auto p-6">
