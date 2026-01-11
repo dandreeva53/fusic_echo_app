@@ -6,7 +6,7 @@ import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { createOrUpdateProfile } from '@/lib/users';
 import type { Accreditation, Role, UserProfile } from '@/types';
-
+import { useState, useEffect } from 'react';
 import { ROLES, ACCREDITATIONS } from '@/lib/constants';
 
 export default function Signup() {
@@ -19,6 +19,15 @@ export default function Signup() {
   const [about, setAbout] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+  const unsub = auth.onAuthStateChanged((user) => {
+    if (user) {
+      r.push('/profile');
+    }
+  });
+  return () => unsub();
+}, [r]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

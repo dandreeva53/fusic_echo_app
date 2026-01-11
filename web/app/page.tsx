@@ -6,6 +6,13 @@ export default function Welcome() {
   return (
     <div className="min-h-screen bg-blue-500 text-white">
       <div className="mx-auto max-w-3xl px-4 py-8">
+       <div className="flex justify-center mb-8">
+          <img 
+            src="/cardiology.png" 
+            alt="ECHO Hub Logo"
+            className="w-48 h-48 object-contain"
+          />
+        </div>
         <h1 className="text-center text-3xl font-bold">Welcome to the ECHO Hub</h1>
 
         <div className="bg-white text-black mt-6 rounded-2xl p-6 shadow">

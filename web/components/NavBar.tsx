@@ -4,40 +4,56 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function NavBar() {
   const [user, setUser] = useState<User | null>(null);
+  const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, setUser);
     return () => unsub();
   }, []);
 
-  return (
-    <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link href="/" className="font-semibold">ECHO Hub</Link>
-        <div className="flex items-center gap-4">
-          <Link href="/directory" className="hover:underline">Users</Link>
-          <Link href="/availability" className="hover:underline">Availability</Link>
-          <Link href="/logbook" className="hover:underline">Logbook</Link>
-          <Link href="/library" className="hover:underline">Library</Link>
+  // Don't show navbar on welcome page
+  if (pathname === '/') return null;
 
+  async function handleSignOut() {
+    await signOut(auth);
+    router.push('/');
+  }
+
+  return (
+    <header className="sticky top-0 z-40 border-b bg-white shadow-sm">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <Link href={user ? '/profile' : '/'} className="text-xl font-bold text-blue-600">
+          FUSIC Echo
+        </Link>
+        
+        <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link href="/profile" className="hover:underline">{user.displayName || user.email}</Link>
+              <Link href="/directory" className="hover:text-blue-600 transition">Directory</Link>
+              <Link href="/availability" className="hover:text-blue-600 transition">Availability</Link>
+              <Link href="/logbook" className="hover:text-blue-600 transition">Logbook</Link>
+              <Link href="/knowledge" className="hover:text-blue-600 transition">Knowledge</Link>
+              <Link href="/profile" className="hover:text-blue-600 transition">
+                {user.displayName || 'Profile'}
+              </Link>
               <button
-                className="rounded-lg border px-3 py-1 text-sm"
-                onClick={() => signOut(auth)}
-                title="Sign out"
+                className="rounded-lg bg-red-500 text-white px-4 py-2 text-sm font-medium hover:bg-red-600 transition"
+                onClick={handleSignOut}
               >
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link href="/login" className="hover:underline">Login</Link>
-              <Link href="/signup" className="rounded-lg border px-3 py-1 text-sm">Create profile</Link>
+              <Link href="/login" className="hover:text-blue-600 transition">Login</Link>
+              <Link href="/signup" className="rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-medium hover:bg-blue-700 transition">
+                Sign Up
+              </Link>
             </>
           )}
         </div>
