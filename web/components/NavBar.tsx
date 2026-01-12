@@ -28,7 +28,7 @@ export default function NavBar() {
     <header className="sticky top-0 z-40 border-b bg-white shadow-sm">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <Link href={user ? '/profile' : '/'} className="text-xl font-bold text-blue-600">
-          FUSIC Echo
+          ECHO Hub
         </Link>
         
         <div className="flex items-center gap-4">

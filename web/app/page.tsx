@@ -10,7 +10,7 @@ export default function Welcome() {
           <img 
             src="/cardiology.png" 
             alt="ECHO Hub Logo"
-            className="w-48 h-48 object-contain"
+            className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 object-contain"
           />
         </div>
         <h1 className="text-center text-3xl font-bold">Welcome to the ECHO Hub</h1>
