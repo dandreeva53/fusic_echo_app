@@ -35,7 +35,7 @@ export default function NavBar() {
           {user ? (
             <>
               <Link href="/directory" className="hover:text-blue-600 transition">Directory</Link>
-              <Link href="/availability" className="hover:text-blue-600 transition">Availability</Link>
+              <Link href="/calendar" className="hover:text-blue-600 transition">Calendar</Link>
               <Link href="/logbook" className="hover:text-blue-600 transition">Logbook</Link>
               <Link href="/knowledge" className="hover:text-blue-600 transition">Knowledge</Link>
               <Link href="/profile" className="hover:text-blue-600 transition">

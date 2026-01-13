@@ -12,10 +12,12 @@ export const ACCREDITATIONS: Accreditation[] = [
 export const STATUSES: Status[] = [
   'available', 
   'unavailable', 
-  'oncall'
+  'event'
 ];
 
 export const LOCATIONS: Location[] = ['UCLH', 'WMS', 'GWB'];
+
+export const EVENTLOCATION: EventLocation[] = ['Online', 'UCLH', 'WMS', 'GWB'];
 
 export const VIEWS: View[] = ['PLAX', 'PSAX', 'AP4C', 'SC4C', 'IVC'];
 
@@ -31,6 +33,6 @@ export const GENDERS = ['F', 'M', 'Other'] as const;
 
 export const STATUS_LABELS: Record<Status, string> = {
   available: 'Available to supervise',
-  oncall: 'On-call',
+  event: 'Event',
   unavailable: 'Unavailable',
 };

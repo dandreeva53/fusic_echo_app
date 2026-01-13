@@ -4,8 +4,9 @@ export type ImageQuality = 'Good' | 'Acceptable' | 'Poor';
 export type YesNoUA = 'Yes' | 'No' | 'U/A';
 export type Role = 'Supervisor' | 'Fellow';
 export type Accreditation = 'FUSIC' | 'BSE Level 1' | 'BSE Level 2';
-export type Status = 'available' | 'unavailable' | 'oncall';
+export type Status = 'available' | 'unavailable' | 'event';
 export type Location = 'UCLH' | 'WMS' | 'GWB';
+export type EventLocation = 'Online' | 'UCLH' | 'WMS' | 'GWB';
 export type View = 'PLAX' | 'PSAX' | 'AP4C' | 'SC4C' | 'IVC';
 
 export type Scan = {
@@ -53,11 +54,13 @@ export type UserProfile = {
 
 export type Slot = {
   id: string;
-  supervisor: string;
+  supervisor: string; // Empty string for events
   status: Status;
   location: Location;
+  EventLocation: EventLocation,
   start: string;
   end: string;
-  capacity: number;
+  capacity: number; // 0 for unavailable and events
   bookings: number;
+  title?: string; // Only used for events
 };
