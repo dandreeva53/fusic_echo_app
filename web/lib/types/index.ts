@@ -32,7 +32,8 @@ export type Scan = {
   pericardialFluid?: YesNoUA;
   pleuralFluid?: YesNoUA;
   findingsSummary?: string;
-  signatures?: Array<{
+  supervised?: boolean;
+  signature?: {
     byEmail: string;
     byName: string;
     at: string;
