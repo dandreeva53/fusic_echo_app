@@ -37,9 +37,9 @@ export type Scan = {
     byEmail: string;
     byName: string;
     at: string;
-    imageDataUrl: string;
+    strokesJson: string; // JSON-encoded stroke data to avoid Firestore nested array issue
     note?: string;
-  }>;
+  };
 };
 
 export type UserProfile = {
@@ -58,7 +58,7 @@ export type Slot = {
   supervisor: string; // Empty string for events
   status: Status;
   location: Location;
-  EventLocation: EventLocation,
+  EventLocation: EventLocation;
   start: string;
   end: string;
   capacity: number; // 0 for unavailable and events

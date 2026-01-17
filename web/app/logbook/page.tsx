@@ -76,95 +76,142 @@ function LogbookClient() {
     });
   }
 
-  // Download Training Logbook PDF
-  function downloadTrainingLogbook() {
-    // Filter: only scans with signatures (both supervised and unsupervised)
-    const scansWithSigs = list.filter(s => s.signature);
+// Helper function to convert JSON-encoded strokes to image data URL for PDF
+function strokesToDataUrl(strokesJson: string): string {
+  try {
+    const strokes = JSON.parse(strokesJson);
+    const canvas = document.createElement('canvas');
+    canvas.width = 700;
+    canvas.height = 250;
+    const ctx = canvas.getContext('2d');
     
-    if (scansWithSigs.length === 0) {
-      alert('No scans with signatures to download.');
-      return;
-    }
+    if (!ctx) return '';
 
-    const doc = new jsPDF('landscape');
-    
-    // Title
-    doc.setFontSize(16);
-    doc.text('Training Logbook', 14, 15);
-    
-    // Prepare table data
-    const tableData = scansWithSigs.map((scan, index) => {
-      const dateOnly = new Date(scan.createdAt).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
+    // White background
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw strokes
+    strokes.forEach((stroke: any[]) => {
+      if (stroke.length === 0) return;
+
+      ctx.beginPath();
+      stroke.forEach((point: any, index: number) => {
+        const x = point.x;
+        const y = point.y;
+
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
       });
-      return [
-        (index + 1).toString(), // Study No.
-        dateOnly, // Date only (DD/MM/YYYY)
-        scan.diagnosis || '—',
-        scan.findingsSummary || '—',
-        '', // Placeholder for signature image
-      ];
+
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
     });
 
-    // Create table
-    autoTable(doc, {
-  startY: 25,
-  head: [['Study No.', 'Date', 'Diagnosis', 'Summary of Findings', 'Mentor Signature']],
-  body: tableData,
-  theme: 'grid',
-  headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+    return canvas.toDataURL('image/png');
+  } catch (err) {
+    console.error('Error converting strokes to image:', err);
+    return '';
+  }
+}
 
-  columnStyles: {
-    0: { cellWidth: 20 },
-    1: { cellWidth: 30 },
-    2: { cellWidth: 50 },
-    3: { cellWidth: 100 },
-    4: { cellWidth: 70 },
-  },
+// Download Training Logbook PDF (updated to use strokesJson)
+function downloadTrainingLogbook() {
+  // Filter: only scans with signatures (both supervised and unsupervised)
+  const scansWithSigs = list.filter(s => s.signature);
+  
+  if (scansWithSigs.length === 0) {
+    alert('No scans with signatures to download.');
+    return;
+  }
 
-  styles: {
-    fontSize: 9,
-    cellPadding: 3,
-  },
+  const doc = new jsPDF('landscape');
+  
+  // Title
+  doc.setFontSize(16);
+  doc.text('Training Logbook', 14, 15);
+  
+  // Prepare table data
+  const tableData = scansWithSigs.map((scan, index) => {
+    const dateOnly = new Date(scan.createdAt).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    return [
+      (index + 1).toString(), // Study No.
+      dateOnly, // Date only (DD/MM/YYYY)
+      scan.diagnosis || '—',
+      scan.findingsSummary || '—',
+      '', // Placeholder for signature image
+    ];
+  });
 
-  // ✅ apply background here (this is the key change)
-  didParseCell: (data) => {
-    if (data.section === 'body') {
-      const scan = scansWithSigs[data.row.index];
-      if (scan?.supervised) {
-        data.cell.styles.fillColor = [219, 234, 254]; // light blue
-      }
-    }
-  },
+  // Create table
+  autoTable(doc, {
+    startY: 25,
+    head: [['Study No.', 'Date', 'Diagnosis', 'Summary of Findings', 'Mentor Signature']],
+    body: tableData,
+    theme: 'grid',
+    headStyles: { fillColor: [59, 130, 246], textColor: 255 },
 
-  didDrawCell: (data) => {
-    // Add signature images in the last column
-    if (data.section === 'body' && data.column.index === 4) {
-      const scan = scansWithSigs[data.row.index];
-      if (scan.signature?.imageDataUrl) {
-        try {
-          doc.addImage(
-            scan.signature.imageDataUrl,
-            'PNG',
-            data.cell.x + 2,
-            data.cell.y + 2,
-            data.cell.width - 4,
-            data.cell.height - 4
-          );
-        } catch (err) {
-          console.error('Error adding signature image:', err);
+    columnStyles: {
+      0: { cellWidth: 20 },
+      1: { cellWidth: 30 },
+      2: { cellWidth: 50 },
+      3: { cellWidth: 100 },
+      4: { cellWidth: 70 },
+    },
+
+    styles: {
+      fontSize: 9,
+      cellPadding: 3,
+    },
+
+    didParseCell: (data) => {
+      if (data.section === 'body') {
+        const scan = scansWithSigs[data.row.index];
+        if (scan?.supervised) {
+          data.cell.styles.fillColor = [219, 234, 254]; // light blue
         }
       }
-    }
-  },
-});
+    },
 
+    didDrawCell: (data) => {
+      // Add signature images in the last column
+      if (data.section === 'body' && data.column.index === 4) {
+        const scan = scansWithSigs[data.row.index];
+        if (scan.signature?.strokesJson) {
+          try {
+            // Convert strokes to image
+            const imageDataUrl = strokesToDataUrl(scan.signature.strokesJson);
+            if (imageDataUrl) {
+              doc.addImage(
+                imageDataUrl,
+                'PNG',
+                data.cell.x + 2,
+                data.cell.y + 2,
+                data.cell.width - 4,
+                data.cell.height - 4
+              );
+            }
+          } catch (err) {
+            console.error('Error adding signature image:', err);
+          }
+        }
+      }
+    },
+  });
 
-    doc.save('training-logbook.pdf');
-    setShowDownloadMenu(false);
-  }
+  doc.save('training-logbook.pdf');
+  setShowDownloadMenu(false);
+}
 
   return (
     <div className="pb-20">

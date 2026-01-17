@@ -58,7 +58,7 @@ function DetailClient() {
     router.replace('/logbook');
   }
 
-  // Save/Replace signature handler
+  // Save/Replace signature handler - STORES STROKES AS JSON STRING
   async function saveSignature() {
     if (!scan) return;
     const u = auth.currentUser;
@@ -66,17 +66,20 @@ function DetailClient() {
       alert('You must be signed in to sign.');
       return;
     }
-    const dataUrl = sigRef.current?.getCanvas().toDataURL('image/png') ?? '';
-    if (!dataUrl) {
+
+    // Get stroke data
+    const strokeData = sigRef.current?.toData();
+    if (!strokeData || strokeData.length === 0) {
       alert('Please add a signature.');
       return;
     }
 
+    // Convert to JSON string to avoid nested array issue in Firestore
     const sig = {
       byEmail: u.email,
       byName: u.displayName || u.email.split('@')[0],
       at: new Date().toISOString(),
-      imageDataUrl: dataUrl,
+      strokesJson: JSON.stringify(strokeData), // Store as JSON string
       note: sigNote || undefined,
     };
 
@@ -169,7 +172,7 @@ function DetailClient() {
         <Block label="Personal notes" value={toStr(scan.notes)} />
       </Section>
 
-      {/* Supervisor signature */}
+      {/* Supervisor signature - RENDER FROM STROKES */}
       {scan.signature && (
         <Section title="Supervisor Signature">
           <div className="px-4 py-3 space-y-2">
@@ -180,11 +183,7 @@ function DetailClient() {
             {scan.signature.note && (
               <div className="text-sm text-gray-600">Note: {scan.signature.note}</div>
             )}
-            <img
-              src={scan.signature.imageDataUrl}
-              alt="signature"
-              className="max-h-24 border rounded"
-            />
+            <SignatureDisplay strokesJson={scan.signature.strokesJson} />
           </div>
         </Section>
       )}
@@ -252,6 +251,61 @@ function DetailClient() {
         </div>
       )}
     </div>
+  );
+}
+
+/* Component to display signature from JSON-encoded strokes */
+function SignatureDisplay({ strokesJson }: { strokesJson: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (!canvasRef.current || !strokesJson) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    try {
+      const strokes = JSON.parse(strokesJson);
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw strokes
+      strokes.forEach((stroke: any[]) => {
+        if (stroke.length === 0) return;
+
+        ctx.beginPath();
+        stroke.forEach((point: any, index: number) => {
+          const x = point.x;
+          const y = point.y;
+
+          if (index === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        });
+
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+      });
+    } catch (err) {
+      console.error('Error rendering signature:', err);
+    }
+  }, [strokesJson]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={700}
+      height={250}
+      style={{ width: '400px', height: '143px' }}
+      className="border rounded"
+    />
   );
 }
 
