@@ -23,6 +23,7 @@ function DetailClient() {
   // Signature modal state
   const [sigOpen, setSigOpen] = useState(false);
   const [sigNote, setSigNote] = useState('');
+  const [supervisorName, setSupervisorName] = useState('');
   const sigRef = useRef<SignatureCanvas>(null);
 
   useEffect(() => {
@@ -67,6 +68,12 @@ function DetailClient() {
       return;
     }
 
+    // Validate supervisor name is provided
+    if (!supervisorName.trim()) {
+      alert('Please enter the supervisor name.');
+      return;
+    }
+
     // Get stroke data
     const strokeData = sigRef.current?.toData();
     if (!strokeData || strokeData.length === 0) {
@@ -77,7 +84,7 @@ function DetailClient() {
     // Convert to JSON string to avoid nested array issue in Firestore
     const sig = {
       byEmail: u.email,
-      byName: u.displayName || u.email.split('@')[0],
+      supervisorName: supervisorName.trim(),
       at: new Date().toISOString(),
       strokesJson: JSON.stringify(strokeData), // Store as JSON string
       note: sigNote || undefined,
@@ -89,6 +96,7 @@ function DetailClient() {
     const fresh = await getScanOnce(scan.id!);
     setScan(fresh);
     setSigNote('');
+    setSupervisorName('');
     sigRef.current?.clear();
     setSigOpen(false);
   }
@@ -165,6 +173,8 @@ function DetailClient() {
       <Section title="Findings">
         <Row k="LV dilated?" v={toStr(scan.lvDilated)} />
         <Row k="LV significantly impaired?" v={toStr(scan.lvImpaired)} />
+        <Row k="RV dilated?" v={toStr(scan.rvDilated)} />
+        <Row k="RV significantly impaired?" v={toStr(scan.rvImpaired)} />
         <Row k="Evidence of low preload?" v={toStr(scan.lowPreload)} />
         <Row k="Pericardial fluid?" v={toStr(scan.pericardialFluid)} />
         <Row k="Pleural fluid?" v={toStr(scan.pleuralFluid)} />
@@ -177,11 +187,11 @@ function DetailClient() {
         <Section title="Supervisor Signature">
           <div className="px-4 py-3 space-y-2">
             <div className="text-sm text-gray-700">
-              {scan.signature.byName} ({scan.signature.byEmail}) —{' '}
+              {scan.signature.supervisorName} —{' '}
               {new Date(scan.signature.at).toLocaleString('en-GB')}
             </div>
             {scan.signature.note && (
-              <div className="text-sm text-gray-600">Note: {scan.signature.note}</div>
+              <div className="text-sm text-gray-600">Feedback: {scan.signature.note}</div>
             )}
             <SignatureDisplay strokesJson={scan.signature.strokesJson} />
           </div>
@@ -221,17 +231,29 @@ function DetailClient() {
 
             {scan.signature && (
               <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 text-sm">
-                ⚠️ This will replace the existing signature by {scan.signature.byName}
+                ⚠️ This will replace the existing signature by {scan.signature.supervisorName}
               </div>
             )}
 
-            <div className="text-sm font-medium">Supervisor note (optional)</div>
-            <input
-              className="w-full rounded-lg border px-3 py-2"
-              placeholder="e.g. reviewed findings, acceptable images"
-              value={sigNote}
-              onChange={(e) => setSigNote(e.target.value)}
-            />
+            <div>
+              <div className="text-sm font-medium mb-1">Supervisor name *</div>
+              <input
+                className="w-full rounded-lg border px-3 py-2"
+                placeholder="e.g. Dr. Smith"
+                value={supervisorName}
+                onChange={(e) => setSupervisorName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <div className="text-sm font-medium mb-1">Feedback (optional)</div>
+              <input
+                className="w-full rounded-lg border px-3 py-2"
+                placeholder="e.g. reviewed findings, acceptable images"
+                value={sigNote}
+                onChange={(e) => setSigNote(e.target.value)}
+              />
+            </div>
 
             <div className="rounded-xl border">
               <SignatureCanvas
@@ -539,6 +561,8 @@ function EditModal({
           [
             ['LV dilated?', 'lvDilated'],
             ['LV significantly impaired?', 'lvImpaired'],
+            ['RV dilated?', 'rvDilated'],
+            ['RV significantly impaired?', 'rvImpaired'],
             ['Evidence of low preload?', 'lowPreload'],
             ['Pericardial fluid?', 'pericardialFluid'],
             ['Pleural fluid?', 'pleuralFluid'],
@@ -620,6 +644,8 @@ function buildCopyText(s: Scan) {
     `Image quality: ${toStr(s.imageQuality)}`,
     `Findings: LV dilated ${toStr(s.lvDilated)}, LV impaired ${toStr(
       s.lvImpaired
+    )}, RV dilated ${toStr(s.rvDilated)}, RV impaired ${toStr(
+      s.rvImpaired
     )}, Low preload ${toStr(s.lowPreload)}, Pericardial fluid ${toStr(
       s.pericardialFluid
     )}, Pleural fluid ${toStr(s.pleuralFluid)}`,

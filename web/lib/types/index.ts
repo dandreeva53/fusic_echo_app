@@ -28,6 +28,8 @@ export type Scan = {
   imageQuality?: ImageQuality;
   lvDilated?: YesNoUA;
   lvImpaired?: YesNoUA;
+  rvDilated?: YesNoUA;
+  rvImpaired?: YesNoUA;
   lowPreload?: YesNoUA;
   pericardialFluid?: YesNoUA;
   pleuralFluid?: YesNoUA;
@@ -35,7 +37,7 @@ export type Scan = {
   supervised?: boolean;
   signature?: {
     byEmail: string;
-    byName: string;
+    supervisorName: string;
     at: string;
     strokesJson: string; // JSON-encoded stroke data to avoid Firestore nested array issue
     note?: string;
