@@ -573,6 +573,75 @@ export default function Knowledge() {
     {
       id: 'ch10',
       number: '10',
+      title: 'Cheat sheets',
+      content: (
+        <div className="space-y-4">
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/CS PLAX.png"
+              alt="CS PLAX"
+              width={800}
+              height={800}
+              className="mx-auto"
+            />
+          </div>
+
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/CS PSAX.png"
+              alt="CS PSAX"
+              width={800}
+              height={800}
+              className="mx-auto"
+            />
+          </div>
+
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/CS A4CX.png"
+              alt="CS A4CX"
+              width={800}
+              height={800}
+              className="mx-auto"
+            />
+          </div>
+
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/CS SC4C.png"
+              alt="CS SC4C"
+              width={800}
+              height={800}
+              className="mx-auto"
+            />
+          </div>
+
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/CS SC IVC.png"
+              alt="CS SC IVC"
+              width={800}
+              height={800}
+              className="mx-auto"
+            />
+          </div>
+
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/CS Lung bases.png"
+              alt="CS Lung bases"
+              width={800}
+              height={800}
+              className="mx-auto"
+            />
+          </div>
+
+        </div>
+      ),
+    },
+    {
+      id: 'ch11',
+      number: '11',
       title: 'Other resources',
       content: (
         <div className="space-y-4">
@@ -653,8 +722,8 @@ export default function Knowledge() {
       ),
     },
     {
-      id: 'ch11',
-      number: '11',
+      id: 'ch12',
+      number: '12',
       title: 'Disclaimer',
       content: (
         <div className="space-y-4">

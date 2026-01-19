@@ -287,6 +287,9 @@ function LogbookClient() {
       doc.rect(margin + 140, yPos, 30, 10, 'F');
       doc.text('Operator', margin + 142, yPos + 6);
       doc.rect(margin + 170, yPos, pageWidth - 2 * margin - 170, 10);
+      // Get operator name from auth user
+      const operatorName = auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || '—';
+      doc.text(operatorName, margin + 172, yPos + 6);
 
       // Indication for Scan
       yPos += 10;

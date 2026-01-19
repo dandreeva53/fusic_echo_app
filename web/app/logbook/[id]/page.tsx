@@ -150,8 +150,9 @@ function DetailClient() {
 
       {/* Summary */}
       <Section title="Summary">
-        <Row k="User Email" v={auth.currentUser?.email || 'Not available'} />
+        <Row k="Operator" v={auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'Not available'} />
         <Row k="Date" v={formatters.dateTime.format(new Date(scan.createdAt))} />
+        <Row k="Indication for scan" v={toStr(scan.indications)} />
         <Row k="Age" v={toStr(scan.age)} />
         <Row k="Gender" v={toStr(scan.gender)} />
         <Row k="Diagnosis" v={toStr(scan.diagnosis)} />
