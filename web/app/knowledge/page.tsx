@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
+
 
 type Chapter = {
   id: string;
@@ -64,9 +66,29 @@ export default function Knowledge() {
           
           <p>Optimal positioning is not always possible in all critical care patients but you should try and optimise the patients where possible as it often results in significantly improved image quality. By elevating the left arm so the left hand is behind the patient's head the rib spaces are widened.</p>
 
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 1.png"
+            alt="Figure 1"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
+
           <h3 className="text-xl font-semibold mt-6">I. Parasternal Long Axis</h3>
           <p>This forms the starting point for most echo exams. The probe is placed in the 3rd-5th intercostal space as close to the sternal edge as possible. All probes have some system to annotate the orientation of the probe. This should be facing the patient's right shoulder when you begin.</p>
           
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 2.png"
+            alt="Figure 2"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
+
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-semibold">Measurements</h4>
             <p>The only measurement that is suggested in the parasternal long axis is the LVEDD. A value of &gt;6cm would be suggestive of a severely dilated Left Ventricle.</p>
@@ -75,6 +97,16 @@ export default function Knowledge() {
           <h3 className="text-xl font-semibold mt-6">II. Parasternal Short Axis View</h3>
           <p>From the position of the parasternal long axis if you rotate your probe 60-90 degrees clockwise the beam will rotate to view the heart in the short axis.</p>
           
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 3.png"
+            alt="Figure 3"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
+
           <div className="ml-4 space-y-2 mt-3">
             <p><strong>A. Level of the aortic valve:</strong> The aortic valve is located in the middle of your picture with the right heart wrapped around.</p>
             <p><strong>B. Mitral valve level:</strong> Refers to the base of the left ventricle. This view can be referred to as the fish mouth view. Not a standard FUSIC view.</p>
@@ -90,14 +122,45 @@ export default function Knowledge() {
             <p>The only measurement in the Apical 4-chamber is the Tricuspid Annular Planar Excursion (TAPSE).</p>
           </div>
 
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 4.png"
+            alt="Figure 4"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
+
           <h3 className="text-xl font-semibold mt-6">IV. Subcostal Imaging</h3>
           <p>Subcostal imaging is achieved with a supine patient by holding the probe from above, rather than below to allow greater range of movement against the patient. The probe is placed with the pointer to the left just below the xiphoid process.</p>
           
           <p className="mt-2">This window proves very useful in critical care imaging in all contexts. The pericardial anchor onto the diaphragm means that sedated and ventilated patients with high PEEP levels often have excellent subcostal images due to the caudal displacement of the heart.</p>
 
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 5.png"
+            alt="Figure 5"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
+
           <h3 className="text-xl font-semibold mt-6">V. Pleural Views</h3>
           <p>The final view of FUSIC is the pleural views which look at both lung bases for pleural effusions. This is equivalent to the PLAPS points in the Blue protocol in Lung Ultrasound.</p>
+
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 6.png"
+            alt="Figure 6"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
         </div>
+
       ),
     },
     {
@@ -125,6 +188,17 @@ export default function Knowledge() {
           </div>
 
           <h3 className="text-xl font-semibold mt-6">Tissue Effect on Ultrasound</h3>
+
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 7.png"
+            alt="Figure 7"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
+
           <p>As sound waves pass through tissue, they undergo processes called reflection, scattering or refraction:</p>
           
           <ul className="list-disc ml-6 space-y-2 mt-2">
@@ -205,12 +279,32 @@ export default function Knowledge() {
             </ul>
           </div>
 
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 8.png"
+            alt="Figure 8"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
+
           <h3 className="text-xl font-semibold mt-6">Left Ventricular Function</h3>
           <p>The systolic function of the left ventricle is complex and difficult to measure, even if an experienced echo cardiographer. Various quantitative techniques exist looking to estimate the ejection fraction. For FUSIC, these techniques are avoided as they are fraught with technical pitfalls and complications.</p>
           
           <p className="mt-2">Instead, the emphasis is placed on visual, qualitative examination. The question is: <strong>Is it severely impaired?</strong> (approximately EF &lt;30%)</p>
 
           <p className="italic mt-3">FUSIC heart mentions awareness of regional wall abnormalities however there is no requirement to assess these in FUSIC. There are many resources online that can help you with more information if you are interested.</p>
+        
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 9.png"
+            alt="Figure 9"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
         </div>
       ),
     },
@@ -256,6 +350,16 @@ export default function Knowledge() {
             <p className="mt-2">Normal if <strong>greater than 16 mm</strong>.</p>
             <p className="mt-2">To measure TAPSE, the heart is imaged using an apical four chamber view. A calliper is placed through the lateral tricuspid annulus and using M Mode the tissue displacement can be measured. A single line is chosen, which reflects the tricuspid annulus. The height difference is measured from its peak to trough.</p>
           </div>
+
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 10.png"
+            alt="Figure 10"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
         </div>
       ),
     },
@@ -297,6 +401,16 @@ export default function Knowledge() {
               <p className="mt-2"><strong>Not spontaneously breathing:</strong> Evidence for both a passive leg raise assessment and the dispensability index, which is beyond the assessment of FUSIC.</p>
             </div>
           </div>
+
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 11.png"
+            alt="Figure 11"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
         </div>
       ),
     },
@@ -321,6 +435,16 @@ export default function Knowledge() {
           <p className="mt-2">Effusions tend to be most prominent in the more dependent areas, and frequently appear in the inferior atrio-ventricular groove.</p>
 
           <p className="mt-2 italic">Of note, it is normal to see a small amount of fluid in this area, a general rule of thumb is if it disappears in diastole then it is physiological and does not represent a pericardial effusion. It therefore follows that any fluid seen around the heart in diastole is abnormal.</p>
+
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 12.png"
+            alt="Figure 12"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
 
           <div className="bg-blue-50 p-4 rounded-lg mt-4">
             <h4 className="font-semibold mb-2">How can you tell it is a pericardial effusion?</h4>
@@ -361,6 +485,26 @@ export default function Knowledge() {
           <p>Large pleural effusions can cause severe respiratory compromise and even haemodynamic compromise as it continues to grow and can cause a tension effect. FUSIC is designed to identify and quantify the effusions present as a cause for respiratory failure.</p>
           
           <p className="mt-2">Left pleural effusions can be seen in the Parasternal Long axis view. But are mostly assessed in the pleural views which are positioned in the PLAPS point. This is the point in the BLUE protocol that looked for posterolateral alveolar pleural syndrome (PLAPS). This is PLAPS point at the intersection of the posterior axillary line and a rib space between the 8th and 12th ribs.</p>
+
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 13.png"
+            alt="Figure 13"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
+
+          <div className="flex justify-center mb-8">
+          <Image
+            src="/Figure 14.png"
+            alt="Figure 14"
+            width={800}
+            height={800}
+            className="mx-auto"
+          />
+          </div>
         </div>
       ),
     },
@@ -406,11 +550,11 @@ export default function Knowledge() {
           <div className="bg-green-50 p-4 rounded-lg">
             <h3 className="font-semibold mb-2">The FUSIC protocol is designed to assess five key questions:</h3>
             <ol className="list-decimal ml-6 space-y-1">
-              <li>1. Is the Left Ventricle dilated or significantly impaired?</li>
-              <li>2. Is the Right Ventricle dilated or significantly impaired?</li>
-              <li>3. What is the filling status? Is there low preload (hypovolemia)?</li>
-              <li>4. Is there any pericardial effusion?</li>
-              <li>5. Is there any pleural effusion?</li>
+              <li>Is the Left Ventricle dilated or significantly impaired?</li>
+              <li>Is the Right Ventricle dilated or significantly impaired?</li>
+              <li>What is the filling status? Is there low preload (hypovolemia)?</li>
+              <li>Is there any pericardial effusion?</li>
+              <li>Is there any pleural effusion?</li>
             </ol>
           </div>
 
@@ -437,32 +581,86 @@ export default function Knowledge() {
           <p>This has hopefully been a helpful if brief overview of some of the key learning that you would need to assist you in making the most out of your course and onward FUSIC journey. There are many resources that you can find to complement the webinars and this course handbook, below are some examples.</p>
 
           <div className="bg-green-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">ICE BLU: https://www.e-lfh.org.uk/programmes/icu-echoultrasound/</h3>
-            <ol className="list-decimal ml-6 space-y-1">
-            <p>It is recommended that you register on eLFH and take the ICU BLU eLearning. Ultrasound physics is not fully covered on the course, as it is too large a topic to cover in just one lecture. This eLearning nicely covers all principles to inform and enhance your practice. In addition, it is essential for the final sign-off of the accreditation.</p>
-            </ol>
+            <h3 className="font-semibold mb-2">
+              ICE BLU:{' '}
+              <a
+                href="https://www.e-lfh.org.uk/programmes/icu-echoultrasound/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-800"
+              >
+                https://www.e-lfh.org.uk/programmes/icu-echoultrasound/
+              </a>
+            </h3>
+
+            <p>
+              It is recommended that you register on eLFH and take the ICU BLU eLearning. Ultrasound physics is not fully covered on the course, as it is too large a topic to cover in just one lecture. This eLearning nicely covers all principles to inform and enhance your practice. In addition, it is essential for the final sign-off of the accreditation.
+            </p>
           </div>
 
+
           <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">FOCUS: http://pie.med.utoronto.ca/TTE/TTE_content/focus.html</h3>
+            <h3 className="font-semibold mb-2">
+              FOCUS: {' '}
+              <a
+                href="http://pie.med.utoronto.ca/TTE/TTE_content/focus.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-800"
+              >
+                http://pie.med.utoronto.ca/TTE/TTE_content/focus.html
+              </a> 
+            </h3>
             <ol className="list-decimal ml-6 space-y-1">
             <p>This Canadian hospital has a really useful echo website to learn about sono-anatomy and surface anatomy for echocardiography.</p>
             </ol>
           </div>
 
           <div className="bg-red-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">Critical care echo: https://www.criticalcareecho.com/resources</h3>
+            <h3 className="font-semibold mb-2">
+              Critical care echo: {' '}
+              <a
+                href="https://www.criticalcareecho.com/resources"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-800"
+              >
+                 https://www.criticalcareecho.com/resources
+              </a> 
+            </h3>
             <ol className="list-decimal ml-6 space-y-1">
             <p>South London has produced this set of resources and videos you can look at and produced our cheat sheet at the back.</p>
             </ol>
           </div>
 
           <div className="bg-yellow-50 p-4 rounded-lg">
-            <h3 className="font-semibold mb-2">FUSIC-SY: https://fusic-sy.co.uk/</h3>
+            <h3 className="font-semibold mb-2">
+              FUSIC-SY: {' '}
+              <a
+                href="https://fusic-sy.co.uk/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-800"
+              >
+                 https://fusic-sy.co.uk/
+              </a> 
+            </h3>
             <ol className="list-decimal ml-6 space-y-1">
             <p>South Yorkshire has this pretty comprehensive set of resources that are great to look at. Both their own and things curated from around the web.</p>
             </ol>
           </div>
+        </div>
+      ),
+    },
+    {
+      id: 'ch11',
+      number: '11',
+      title: 'Disclaimer',
+      content: (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Disclaimer</h2>
+          
+          <p>These chapters were written from a range of open access resources and amalgamation of excellent work from fellow POCUS enthusiasts, and we acknowledge all the hard work required to create them. UCLH FUSIC heart course is run as a charitable enterprise and no profits are made from the courses or this document. We aim to support the growthand development of those interested in POCUS.</p>
         </div>
       ),
     }
