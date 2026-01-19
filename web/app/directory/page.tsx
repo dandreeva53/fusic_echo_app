@@ -6,6 +6,14 @@ import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { UserProfile } from '@/types';
 
+function getInitials(fullName: string | undefined | null) {
+  if (!fullName) return '?';
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return (parts[0][0] ?? '?').toUpperCase();
+  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+}
+
 export default function DirectoryPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [q, setQ] = useState('');
@@ -73,17 +81,28 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function UserRow({ user }: { user: UserProfile }) {
+  const initials = getInitials(user.name);
+
   return (
     <Link
       href={`/directory/${encodeURIComponent(user.email)}`}
       className="block rounded-xl border p-3 hover:bg-gray-50"
     >
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg bg-gray-200" />
+        <div
+          className="h-10 w-10 rounded-lg bg-blue-200 flex items-center justify-center
+                     font-semibold text-blue-700 select-none"
+          aria-label={`Avatar initials: ${initials}`}
+          title={user.name}
+        >
+          {initials}
+        </div>
+
         <div className="flex-1">
           <div className="font-semibold">{user.name}</div>
           <div className="text-gray-600 text-sm">{user.email}</div>
         </div>
+
         <div className="text-gray-400 text-xl">›</div>
       </div>
     </Link>

@@ -1,3 +1,4 @@
+// lib/dateUtils.ts - Replace your existing file with this
 export const TZ = 'Europe/London';
 
 export const formatters = {
@@ -6,7 +7,7 @@ export const formatters = {
   }),
   dateTime: new Intl.DateTimeFormat('en-GB', {
     day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour: '2-digit', minute: '2-digit',
     hour12: false, timeZone: TZ,
   }),
   title: new Intl.DateTimeFormat('en-GB', { 

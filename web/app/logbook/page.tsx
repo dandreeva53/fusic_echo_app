@@ -279,17 +279,17 @@ function LogbookClient() {
       doc.rect(margin, yPos, 60, 10, 'F');
       doc.text('Demographics (e.g Age, Gender, BMI)', margin + 2, yPos + 6);
       
-      doc.rect(margin + 60, yPos, 80, 10);
+      doc.rect(margin + 60, yPos, 60, 10);
       const demographics = `${scan.age || '—'}, ${scan.gender || '—'}, BMI: ${scan.bmi || '—'}`;
       doc.text(demographics, margin + 62, yPos + 6);
       
       doc.setFillColor(200, 200, 200);
-      doc.rect(margin + 140, yPos, 30, 10, 'F');
-      doc.text('Operator', margin + 142, yPos + 6);
-      doc.rect(margin + 170, yPos, pageWidth - 2 * margin - 170, 10);
+      doc.rect(margin + 120, yPos, 25, 10, 'F');
+      doc.text('Operator', margin + 122, yPos + 6);
+      doc.rect(margin + 145, yPos, pageWidth - 2 * margin - 145, 10);
       // Get operator name from auth user
       const operatorName = auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || '—';
-      doc.text(operatorName, margin + 172, yPos + 6);
+      doc.text(operatorName, margin + 147, yPos + 6);
 
       // Indication for Scan
       yPos += 10;
