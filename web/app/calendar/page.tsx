@@ -6,7 +6,8 @@ const FullCalendar = dynamic(() => import('@fullcalendar/react'), { ssr: false }
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import type { DateClickArg, DateSelectArg, EventClickArg } from '@fullcalendar/core';
+import type { DateSelectArg } from '@fullcalendar/interaction';
+import type { DateClickArg, EventClickArg } from '@fullcalendar/core';
 import { formatters, withOrdinal, TZ } from '@/lib/dateUtils';
 import type { Status, Location, Slot } from '@/types';
 import { STATUSES, LOCATIONS, EVENTLOCATION, STATUS_LABELS } from '@/lib/constants';
