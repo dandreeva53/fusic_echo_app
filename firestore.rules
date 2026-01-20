@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     match /users/{userEmail} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null && request.time > resource.data.lastRead + duration.value(1, 's');
 
       allow create, update, delete: if request.auth != null
                                     && request.auth.token.email == userEmail;
