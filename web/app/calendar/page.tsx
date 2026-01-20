@@ -248,7 +248,6 @@ async function saveSlot() {
       supervisor: form.status === 'event' ? '' : (form.supervisor || ''),
       status: form.status as Status,
       location: (form.location as Location) || 'UCLH',
-      EventLocation: (form.EventLocation as any) || 'Online',
       start: form.start!,
       end: form.end!,
       capacity: form.status === 'available' ? Number(form.capacity) : 0,
