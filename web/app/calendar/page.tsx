@@ -8,7 +8,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import type { EventClickArg } from '@fullcalendar/core';
 import { formatters, withOrdinal, TZ } from '@/lib/dateUtils';
-import type { Status, Location, Slot } from '@/types';
+import type { Status, Location, Slot } from '@/lib/types';
 import { STATUSES, LOCATIONS, EVENTLOCATION, STATUS_LABELS } from '@/lib/constants';
 import { emailToName, capitalize, addHours } from '@/lib/utils';
 import { auth, db } from '@/lib/firebase';
