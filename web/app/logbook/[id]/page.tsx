@@ -6,7 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import SignatureCanvas from 'react-signature-canvas';
 import { auth } from '@/lib/firebase';
-import { Scan, getScanOnce, updateScanFB, deleteScanFB } from '../fb';
+import type { Scan } from '@/lib/types';
+import { getScanOnce, updateScanFB, deleteScanFB } from '../fb';
 import { formatters, isoToLocal, localToIso } from '@/lib/dateUtils';
 import { GENDERS, VIEWS, IMAGE_QUALITIES, YES_NO_UA } from '@/lib/constants';
 import { toStr } from '@/lib/utils';
@@ -40,24 +41,33 @@ function DetailClient() {
 
   if (!scan) return <LoadingSpinner message="Loading scan record..." />;
 
-  async function doSave() {
-    await updateScanFB(scan.id!, form);
-    const fresh = await getScanOnce(scan.id!);
-    setScan(fresh);
-    setEdit(false);
-  }
+async function doSave() {
+  if (!scan?.id) return; // or throw new Error('No scan loaded');
 
-  async function doCopy() {
-    const text = buildCopyText(scan);
-    await navigator.clipboard.writeText(text);
-    alert('Details copied to clipboard');
-  }
+  await updateScanFB(scan.id, form);
+  const fresh = await getScanOnce(scan.id);
+  setScan(fresh);
+  setEdit(false);
+}
 
-  async function doDelete() {
-    if (!confirm('Delete this record?')) return;
-    await deleteScanFB(scan.id!);
-    router.replace('/logbook');
-  }
+
+async function doCopy() {
+  if (!scan) return; // or alert('Scan not loaded yet');
+
+  const text = buildCopyText(scan);
+  await navigator.clipboard.writeText(text);
+  alert('Details copied to clipboard');
+}
+
+async function doDelete() {
+  if (!scan?.id) return;
+
+  if (!confirm('Delete this record?')) return;
+
+  await deleteScanFB(scan.id);
+  router.replace('/logbook');
+}
+
 
   // Save/Replace signature handler - STORES STROKES AS JSON STRING
   async function saveSignature() {

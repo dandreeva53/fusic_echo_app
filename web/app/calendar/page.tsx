@@ -2,7 +2,11 @@
 
 import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-const FullCalendar = dynamic(() => import('@fullcalendar/react'), { ssr: false });
+import type FullCalendarType from '@fullcalendar/react';
+const FullCalendar = dynamic(
+  async () => (await import('@fullcalendar/react')).default,
+  { ssr: false }
+) as unknown as typeof FullCalendarType;
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';

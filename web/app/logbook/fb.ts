@@ -1,6 +1,6 @@
 'use client';
 
-import type { Scan, YesNoUA, Gender, ImageQuality } from '@/types';
+import type { Scan, YesNoUA, Gender, ImageQuality } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
 import {
   collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc,

@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { auth } from '@/lib/firebase';
-import { Scan, watchScans, addScanFB } from './fb';
+import type { Scan } from '@/lib/types';
+import { watchScans, addScanFB } from './fb';
 import { formatters, isoToLocal, localToIso } from '@/lib/dateUtils';
 import { GENDERS } from '@/lib/constants';
 import jsPDF from 'jspdf';
@@ -104,8 +105,8 @@ const unsignedCount = useMemo(
       age: form.age !== undefined && form.age !== null ? Number(form.age) : undefined,
       gender: (form.gender as any) ?? 'Other',
       bmi: form.bmi !== undefined && form.bmi !== null ? Number(form.bmi) : undefined,
-      notes: form.notes?.trim() || null,
-      comments: form.comments?.trim() || null,
+      notes: form.notes?.trim() || undefined,
+      comments: form.comments?.trim() || undefined,
       supervised: form.supervised ?? false,
     };
 
@@ -278,7 +279,7 @@ const unsignedCount = useMemo(
     if (traineeCtx) {
       traineeCtx.fillStyle = 'white';
       traineeCtx.fillRect(0, 0, traineeCanvas.width, traineeCanvas.height);
-      traineeStrokeData.forEach((stroke: any[]) => {
+      (traineeStrokeData as any).forEach((stroke: any) => {
         if (stroke.length === 0) return;
         traineeCtx.beginPath();
         stroke.forEach((point: any, index: number) => {
