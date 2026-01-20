@@ -1,21 +1,43 @@
-// SAFE default for prototype: directory is readable to any signed-in user.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     match /users/{userEmail} {
-      // Directory needs this:
       allow read: if request.auth != null;
 
-      // Only the owner can write their own profile
       allow create, update, delete: if request.auth != null
                                     && request.auth.token.email == userEmail;
 
-      // Trainee scans: owner-only access (we can relax for signatures later)
       match /scans/{scanId} {
         allow read, create, update, delete: if request.auth != null
                                             && request.auth.token.email == userEmail;
       }
+    }
+
+    match /slots/{slotId} {
+      allow read: if request.auth != null;
+
+      // Create: signed-in users only
+      allow create: if request.auth != null
+        && request.resource.data.status in ['available', 'unavailable', 'event']
+        && (
+          request.resource.data.status == 'event'
+          || request.resource.data.supervisor == request.auth.token.email
+        );
+
+      // Update:
+      // - owner can edit everything
+      // - others can only change bookings + bookedBy (book/unbook)
+      allow update: if request.auth != null
+        && (
+          resource.data.supervisor == request.auth.token.email
+          || request.resource.data.diff(resource.data).changedKeys()
+            .hasOnly(['bookings', 'bookedBy'])
+        );
+
+      // Delete: only owner
+      allow delete: if request.auth != null
+        && resource.data.supervisor == request.auth.token.email;
     }
   }
 }
