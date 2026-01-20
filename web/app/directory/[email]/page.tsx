@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { getProfileByEmail } from '@/lib/users';
-import type { UserProfile } from '@/types';
+import type { UserProfile } from '@/lib/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 function getInitials(fullName: string | undefined | null) {

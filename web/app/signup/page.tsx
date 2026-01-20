@@ -4,7 +4,7 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { createOrUpdateProfile } from '@/lib/users';
-import type { Accreditation, Role, UserProfile } from '@/types';
+import type { Accreditation, Role, UserProfile } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { ROLES, ACCREDITATIONS } from '@/lib/constants';
 

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import type { UserProfile } from '@/types';
+import type { UserProfile } from '@/lib/types';
 
 function getInitials(fullName: string | undefined | null) {
   if (!fullName) return '?';

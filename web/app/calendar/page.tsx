@@ -12,7 +12,7 @@ import type { Status, Location, Slot } from '@/lib/types';
 import { STATUSES, LOCATIONS, EVENTLOCATION, STATUS_LABELS } from '@/lib/constants';
 import { emailToName, capitalize, addHours } from '@/lib/utils';
 import { auth, db } from '@/lib/firebase';
-import type { UserProfile } from '@/types';
+import type { UserProfile } from '@/lib/types';
 import {
   collection,
   onSnapshot,

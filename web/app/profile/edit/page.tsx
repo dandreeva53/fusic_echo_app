@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { createOrUpdateProfile, watchMyProfile } from '@/lib/users';
-import type { Accreditation, Role, UserProfile } from '@/types';
+import type { Accreditation, Role, UserProfile } from '@/lib/types';
 import { ROLES, ACCREDITATIONS } from '@/lib/constants';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
