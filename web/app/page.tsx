@@ -1,16 +1,19 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Welcome() {
   return (
     <div className="min-h-screen bg-blue-500 text-white">
       <div className="mx-auto max-w-3xl px-4 py-8">
        <div className="flex justify-center mb-8">
-          <img 
+          <Image 
             src="/cardiology.png" 
             alt="ECHO Hub Logo"
-            className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 object-contain"
+            width={320}
+            height={320}
+            priority
           />
         </div>
         <h1 className="text-center text-3xl font-bold">Welcome to the ECHO Hub</h1>

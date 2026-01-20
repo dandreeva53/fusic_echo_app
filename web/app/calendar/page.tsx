@@ -27,7 +27,6 @@ import {
   arrayRemove,
 } from 'firebase/firestore';
 
-
 /* ---------- helpers ---------- */
 function toIsoLocal(d: Date) { 
   // Convert to ISO string maintaining local timezone
@@ -76,6 +75,7 @@ function CalendarClient() {
   const calRef = useRef<any>(null);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [currentUserEmail, setCurrentUserEmail] = useState<string>('');
+  const memoizedSlots = useMemo(() => slots, [slots]);
 
   // Load all users from Firebase with error handling
   useEffect(() => {
@@ -363,13 +363,13 @@ async function unbook(id: string) {
 
   // Available slots (not booked by current user, not created by current user)
   const availableList = useMemo(
-    () => slots
+    () => memoizedSlots
       .filter(filterFn)
       .filter((s) => s.status === 'available')
       .filter((s) => s.supervisor !== currentUserEmail)
       .filter((s) => !s.bookedBy?.includes(currentUserEmail))
       .sort((a, b) => +new Date(a.start) - +new Date(b.start)),
-    [slots, filterFn, currentUserEmail]
+    [memoizedSlots, filterFn, currentUserEmail]
   );
 
   // Booked slots (booked by current user)

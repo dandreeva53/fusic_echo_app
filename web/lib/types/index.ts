@@ -59,8 +59,7 @@ export type Slot = {
   id: string;
   supervisor: string; // Empty string for events
   status: Status;
-  location: Location;
-  EventLocation: EventLocation;
+  location: Location | EventLocation;
   start: string;
   end: string;
   capacity: number; // 0 for unavailable and events
