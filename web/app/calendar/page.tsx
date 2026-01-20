@@ -7,7 +7,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import type { DateSelectArg } from '@fullcalendar/interaction';
-import type { DateClickArg, EventClickArg } from '@fullcalendar/core';
+import type { EventClickArg } from '@fullcalendar/core';
 import { formatters, withOrdinal, TZ } from '@/lib/dateUtils';
 import type { Status, Location, Slot } from '@/types';
 import { STATUSES, LOCATIONS, EVENTLOCATION, STATUS_LABELS } from '@/lib/constants';
@@ -170,7 +170,7 @@ function CalendarClient() {
   }, [slots, filterFn, emailToNameMap]);
 
   // Calendar event handlers
-  const onDateClick = useCallback((arg: DateClickArg) => {
+  const onDateClick = useCallback((arg: { date: Date; dateStr: string }) => {
     const start = arg.date;
     const end = new Date(start.getTime() + 60 * 60 * 1000);
     openCreate(toIsoLocal(start), toIsoLocal(end));
