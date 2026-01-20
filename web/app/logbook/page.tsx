@@ -13,6 +13,7 @@ import SignatureCanvas from 'react-signature-canvas';
 
 function LogbookClient() {
   const [q, setQ] = useState('');
+  const [signedFilter, setSignedFilter] = useState<'all' | 'signed' | 'unsigned'>('all');
   const [items, setItems] = useState<Scan[]>([]);
   const [showDownloadMenu, setShowDownloadMenu] = useState(false);
 
@@ -42,21 +43,57 @@ function LogbookClient() {
     supervised: false,
   });
 
-  const list = useMemo(() => {
-    const filtered = items.filter((s) => {
-      const hay = `${s.diagnosis} ${s.notes ?? ''} ${s.comments ?? ''} ${s.age ?? ''} ${s.gender ?? ''}`.toLowerCase();
-      return hay.includes(q.toLowerCase());
-    });
-    
-    // Sort: supervised scans first, then by date
-    return filtered.sort((a, b) => {
-      // If one is supervised and the other isn't, supervised comes first
-      if (a.supervised && !b.supervised) return -1;
-      if (!a.supervised && b.supervised) return 1;
-      // Otherwise sort by date (newest first)
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-  }, [items, q]);
+const list = useMemo(() => {
+  const query = q.trim().toLowerCase();
+
+  // Optional: allow “signed” / “unsigned” typed into search box
+  const wantsSigned = /\bsigned\b/.test(query) && !/\bunsigned\b/.test(query);
+  const wantsUnsigned = /\bunsigned\b|\bnot\s*signed\b/.test(query);
+
+  const filtered = items.filter((s) => {
+    const isSigned = !!s.signature;
+
+    // Signed filter chip takes priority, otherwise allow search keywords
+    const passesSignedFilter =
+      signedFilter === 'all'
+        ? (!wantsSigned && !wantsUnsigned) || (wantsSigned ? isSigned : wantsUnsigned ? !isSigned : true)
+        : signedFilter === 'signed'
+          ? isSigned
+          : !isSigned;
+
+    if (!passesSignedFilter) return false;
+
+    // Text search (same as you already do)
+    const hay = `${s.diagnosis} ${s.notes ?? ''} ${s.comments ?? ''} ${s.age ?? ''} ${s.gender ?? ''}`.toLowerCase();
+    // If query is only "signed"/"unsigned", don’t require it to match hay
+    const queryWithoutStatus = query
+      .replace(/\bnot\s*signed\b/g, '')
+      .replace(/\bunsigned\b/g, '')
+      .replace(/\bsigned\b/g, '')
+      .trim();
+
+    if (!queryWithoutStatus) return true;
+
+    return hay.includes(queryWithoutStatus);
+  });
+
+  // Sort: supervised first, then by date (your existing logic)
+  return filtered.sort((a, b) => {
+    if (a.supervised && !b.supervised) return -1;
+    if (!a.supervised && b.supervised) return 1;
+    return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  });
+}, [items, q, signedFilter]);
+
+const signedCount = useMemo(
+  () => items.filter((s) => !!s.signature).length,
+  [items]
+);
+
+const unsignedCount = useMemo(
+  () => items.filter((s) => !s.signature).length,
+  [items]
+);
 
   async function save() {
     if (!form.diagnosis || !form.createdAt) return;
@@ -81,6 +118,13 @@ function LogbookClient() {
       supervised: false,
     });
   }
+  const signedScans = useMemo(() => list.filter((s) => !!s.signature), [list]);
+  const signedIds = useMemo(() => signedScans.map((s) => s.id!).filter(Boolean), [signedScans]);
+
+  const allSelected = selectedScans.size > 0 && selectedScans.size === list.length;
+
+  const allSignedSelected =
+    signedIds.length > 0 && signedIds.every((id) => selectedScans.has(id));
 
   // Helper to convert strokes to canvas for PDF
   function strokesToCanvas(strokesJson: string): HTMLCanvasElement | null {
@@ -506,6 +550,49 @@ function LogbookClient() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
+        <div className="mt-2 flex items-center justify-between gap-3">
+        <div className="mt-2 flex gap-2">
+  <button
+    type="button"
+    onClick={() => setSignedFilter('all')}
+    className={`px-3 py-1 rounded-full text-xs border ${
+      signedFilter === 'all'
+        ? 'bg-white text-blue-600 border-white'
+        : 'bg-blue-500 text-white/90 border-white/40'
+    }`}
+  >
+    All
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setSignedFilter('signed')}
+    className={`px-3 py-1 rounded-full text-xs border ${
+      signedFilter === 'signed'
+        ? 'bg-white text-blue-600 border-white'
+        : 'bg-blue-500 text-white/90 border-white/40'
+    }`}
+  >
+    Signed
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setSignedFilter('unsigned')}
+    className={`px-3 py-1 rounded-full text-xs border ${
+      signedFilter === 'unsigned'
+        ? 'bg-white text-blue-600 border-white'
+        : 'bg-blue-500 text-white/90 border-white/40'
+    }`}
+  >
+    Not signed
+  </button>
+</div>
+  <div className="text-xs text-white/90 whitespace-nowrap">
+    Signed: {signedCount} • Not signed: {unsignedCount}
+  </div>
+</div>
+
         <button
           aria-label="Add scan"
           onClick={() => setOpen(true)}
@@ -525,12 +612,23 @@ function LogbookClient() {
             className={`block p-4 hover:bg-gray-50 ${s.supervised ? 'bg-blue-50' : ''}`}
           >
             <div className="text-sm text-blue-600">
-              {formatters.dateTime.format(new Date(s.createdAt))}
-              {s.supervised && (
-                <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">
-                  Supervised
-                </span>
-              )}
+{formatters.dateTime.format(new Date(s.createdAt))}
+
+{s.supervised && (
+  <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">
+    Supervised
+  </span>
+)}
+
+{s.signature ? (
+  <span className="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
+    Signed
+  </span>
+) : (
+  <span className="ml-2 text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full">
+    Not signed
+  </span>
+)}
             </div>
 
             <div className="mt-1 flex items-start gap-3">
@@ -725,21 +823,52 @@ function LogbookClient() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-medium">Select scans to include:</h3>
-                <button
-                  onClick={() => {
-                    if (selectedScans.size === list.length) {
-                      setSelectedScans(new Set());
-                    } else {
-                      setSelectedScans(new Set(list.map(s => s.id!)));
-                    }
-                  }}
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  {selectedScans.size === list.length ? 'Deselect All' : 'Select All'}
-                </button>
-              </div>
+<div className="flex items-center justify-between mb-2">
+  <h3 className="font-medium">Select scans to include:</h3>
+
+  <div className="flex items-center gap-3">
+    {/* Select all signed */}
+    <button
+      onClick={() => {
+        if (signedIds.length === 0) return;
+
+        setSelectedScans((prev) => {
+          const next = new Set(prev);
+
+          if (allSignedSelected) {
+            // remove only signed
+            signedIds.forEach((id) => next.delete(id));
+          } else {
+            // add only signed
+            signedIds.forEach((id) => next.add(id));
+          }
+
+          return next;
+        });
+      }}
+      className="text-sm text-blue-600 hover:underline disabled:text-gray-400 disabled:no-underline"
+      disabled={signedIds.length === 0}
+      title={signedIds.length === 0 ? 'No signed scans available' : ''}
+    >
+      {allSignedSelected ? 'Deselect All Signed' : 'Select All Signed'}
+    </button>
+
+    {/* Select all */}
+    <button
+      onClick={() => {
+        if (allSelected) {
+          setSelectedScans(new Set());
+        } else {
+          setSelectedScans(new Set(list.map((s) => s.id!).filter(Boolean)));
+        }
+      }}
+      className="text-sm text-blue-600 hover:underline"
+    >
+      {allSelected ? 'Deselect All' : 'Select All'}
+    </button>
+  </div>
+</div>
+
               <div className="space-y-3 max-h-96 overflow-y-auto border rounded-lg p-3">
                 {/* Signed scans */}
                 {list.filter(s => s.signature).length > 0 && (

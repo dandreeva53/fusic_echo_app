@@ -11,12 +11,33 @@ import type { Status, Location, Slot } from '@/types';
 import { STATUSES, LOCATIONS, EVENTLOCATION, STATUS_LABELS } from '@/lib/constants';
 import { emailToName, capitalize, addHours } from '@/lib/utils';
 import { auth, db } from '@/lib/firebase';
-import { collection, onSnapshot, query as firestoreQuery, orderBy } from 'firebase/firestore';
 import type { UserProfile } from '@/types';
+import {
+  collection,
+  onSnapshot,
+  query as firestoreQuery,
+  orderBy,
+  doc,
+  setDoc,
+  updateDoc,
+  deleteDoc as deleteDocFS,
+  getDoc,
+  increment,
+  arrayUnion,
+  arrayRemove,
+} from 'firebase/firestore';
+
 
 /* ---------- helpers ---------- */
 function toIsoLocal(d: Date) { 
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString(); 
+  // Convert to ISO string maintaining local timezone
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const seconds = String(d.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 }
 
 function isoToLocal(iso?: string) { 
@@ -71,6 +92,20 @@ function CalendarClient() {
       }
     );
     return () => unsub();
+  }, []);
+
+  useEffect(() => {
+  const qRef = firestoreQuery(collection(db, 'slots'), orderBy('start', 'asc'));
+  const unsub = onSnapshot(
+    qRef,
+    (snap) => {
+      const loaded: Slot[] = [];
+      snap.forEach((d) => loaded.push({ id: d.id, ...(d.data() as Omit<Slot, 'id'>) }));
+      setSlots(loaded);
+    },
+    (error) => console.error('Error loading slots:', error)
+  );
+  return () => unsub();
   }, []);
 
   // Get current user email with error handling
@@ -144,12 +179,21 @@ function CalendarClient() {
   }, [currentUserEmail, users]);
 
   const onEventClick = useCallback((arg: EventClickArg) => {
-    const s = slots.find((x) => x.id === arg.event.id);
-    if (!s) return;
-    setEditingId(s.id);
-    setForm({ ...s });
-    setOpen(true);
-  }, [slots]);
+  const s = slots.find((x) => x.id === arg.event.id);
+  if (!s) return;
+
+    // Allow editing only if you created it (or if you decide events are editable by everyone)
+  if (s.status !== 'event' && s.supervisor !== currentUserEmail) {
+    alert("You can’t edit someone else’s slot.");
+    return;
+  }
+  // If it's a supervise/unavailable slot, keep supervisor as whoever owns it.
+  // (If you truly want it always to be the signed-in user, force it here,
+  // but that would "steal" ownership when clicking others' slots.)
+  setEditingId(s.id);
+  setForm({ ...s });
+  setOpen(true);
+  }, [slots, currentUserEmail]);
 
   // Modal state
   const [open, setOpen] = useState(false);
@@ -160,71 +204,192 @@ function CalendarClient() {
     capacity: 2 
   });
 
-  function openCreate(startISO: string, endISO?: string) {
-    setEditingId(null);
-    setForm({ 
-      supervisor: currentUserEmail || users[0]?.email || '',
-      status: 'available', 
-      location: 'UCLH', 
-      start: startISO, 
-      end: endISO || toIsoLocal(addHours(new Date(startISO), 1)), 
-      capacity: 2, 
-      bookings: 0 
-    });
-    setOpen(true);
+function openCreate(startISO: string, endISO?: string) {
+  if (!currentUserEmail) {
+    alert('You must be signed in to create a slot');
+    return;
   }
 
-  function saveSlot() {
-    if (!form.start || !form.end || !form.status) return;
-    
-    // Validation based on status
-    if (form.status === 'event') {
-      if (!form.title?.trim()) return;
-    } else {
-      if (!form.supervisor || !form.location) return;
-      if (form.status === 'available' && !form.capacity) return;
+  setEditingId(null);
+  setForm({
+    supervisor: currentUserEmail, // <- locked to signed-in user
+    status: 'available',
+    location: 'UCLH',
+    start: startISO,
+    end: endISO || toIsoLocal(addHours(new Date(startISO), 1)),
+    capacity: 2,
+    bookings: 0,
+    bookedBy: [],
+  });
+  setOpen(true);
+}
+
+async function saveSlot() {
+  if (!form.start || !form.end || !form.status) return;
+
+  // Validate
+  if (form.status === 'event') {
+    if (!form.title?.trim()) return;
+  } else {
+    if (!currentUserEmail) {
+      alert('You must be signed in to create/edit a slot');
+      return;
     }
+    if (!form.location) return;
+    if (form.status === 'available' && !form.capacity) return;
+
+    // Lock supervisor to signed-in user
+    form.supervisor = currentUserEmail;
+  }
+
+  try {
+    const payloadBase: Omit<Slot, 'id' | 'title'> = {
+      supervisor: form.status === 'event' ? '' : (form.supervisor || ''),
+      status: form.status as Status,
+      location: (form.location as Location) || 'UCLH',
+      EventLocation: (form.EventLocation as any) || 'Online',
+      start: form.start!,
+      end: form.end!,
+      capacity: form.status === 'available' ? Number(form.capacity) : 0,
+      bookings: form.bookings ? Number(form.bookings) : 0,
+      bookedBy: form.bookedBy || [],
+    };
+
+    // Only add title for events (never write undefined)
+    const payload =
+      form.status === 'event'
+        ? { ...payloadBase, title: (form.title || 'Event').trim() }
+        : payloadBase;
 
     if (editingId) {
-      setSlots((prev) => prev.map((s) => 
-        s.id === editingId ? { ...(s as Slot), ...(form as Slot), id: editingId } : s
-      ));
+      await updateDoc(doc(db, 'slots', editingId), payload as any);
     } else {
-      const newSlot: Slot = {
-        id: crypto.randomUUID(),
-        supervisor: form.supervisor || '',
-        status: form.status as Status,
-        location: form.location as Location,
-        start: form.start!,
-        end: form.end!,
-        capacity: form.status === 'available' ? Number(form.capacity) : 0,
-        bookings: 0,
-        title: form.status === 'event' ? form.title : undefined,
-      };
-      setSlots((prev) => [newSlot, ...prev]);
+      const ref = doc(collection(db, 'slots'));
+      await setDoc(ref, payload as any);
     }
+
     setOpen(false);
+  } catch (e) {
+    console.error('Save slot failed:', e);
+    alert((e as any)?.message || 'Could not save slot. Check console for details.');
+  }
+}
+
+async function deleteSlot() {
+  if (!editingId) return;
+  try {
+    await deleteDocFS(doc(db, 'slots', editingId));
+    setOpen(false);
+  } catch (e) {
+    console.error('Delete failed:', e);
+    alert('Could not delete slot.');
+  }
+}
+
+
+async function deleteSlotById(id: string) {
+  try {
+    await deleteDocFS(doc(db, 'slots', id));
+  } catch (e) {
+    console.error('Delete failed:', e);
+    alert('Could not delete slot.');
+  }
+}
+
+
+async function book(id: string) {
+  if (!currentUserEmail) {
+    alert('You must be signed in to book');
+    return;
   }
 
-  function deleteSlot() { 
-    if (!editingId) return; 
-    setSlots((p) => p.filter((s) => s.id !== editingId)); 
-    setOpen(false); 
+  const ref = doc(db, 'slots', id);
+
+  try {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+
+    const s = snap.data() as Slot;
+
+    const bookedBy = s.bookedBy || [];
+    if (bookedBy.includes(currentUserEmail)) {
+      alert('You have already booked this slot');
+      return;
+    }
+
+    if (s.bookings >= s.capacity) {
+      alert('Slot is full');
+      return;
+    }
+
+    await updateDoc(ref, {
+      bookings: increment(1),
+      bookedBy: arrayUnion(currentUserEmail),
+    });
+  } catch (e) {
+    console.error('Booking failed:', e);
+    alert('Could not book slot.');
+  }
+}
+
+
+async function unbook(id: string) {
+  if (!currentUserEmail) {
+    alert('You must be signed in to unbook');
+    return;
   }
 
-  function book(id: string) { 
-    setSlots((p) => p.map((s) => 
-      (s.id === id && s.bookings < s.capacity ? { ...s, bookings: s.bookings + 1 } : s)
-    )); 
-  }
+  const ref = doc(db, 'slots', id);
 
-  // Only show "available to supervise" slots in the list
+  try {
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+
+    const s = snap.data() as Slot;
+    const bookedBy = s.bookedBy || [];
+    if (!bookedBy.includes(currentUserEmail)) return;
+
+    await updateDoc(ref, {
+      bookings: increment(-1),
+      bookedBy: arrayRemove(currentUserEmail),
+    });
+  } catch (e) {
+    console.error('Unbook failed:', e);
+    alert('Could not unbook slot.');
+  }
+}
+
+
+
+  // Available slots (not booked by current user, not created by current user)
   const availableList = useMemo(
     () => slots
       .filter(filterFn)
       .filter((s) => s.status === 'available')
+      .filter((s) => s.supervisor !== currentUserEmail)
+      .filter((s) => !s.bookedBy?.includes(currentUserEmail))
       .sort((a, b) => +new Date(a.start) - +new Date(b.start)),
-    [slots, filterFn]
+    [slots, filterFn, currentUserEmail]
+  );
+
+  // Booked slots (booked by current user)
+  const bookedList = useMemo(
+    () => slots
+      .filter(filterFn)
+      .filter((s) => s.status === 'available')
+      .filter((s) => s.bookedBy?.includes(currentUserEmail))
+      .sort((a, b) => +new Date(a.start) - +new Date(b.start)),
+    [slots, filterFn, currentUserEmail]
+  );
+
+  // Created slots (created by current user)
+  const createdList = useMemo(
+    () => slots
+      .filter(filterFn)
+      .filter((s) => s.status === 'available')
+      .filter((s) => s.supervisor === currentUserEmail)
+      .sort((a, b) => +new Date(a.start) - +new Date(b.start)),
+    [slots, filterFn, currentUserEmail]
   );
 
   return (
@@ -245,7 +410,7 @@ function CalendarClient() {
             ref={calRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
-            timeZone={TZ}
+            timeZone="local"
             height="auto"
             selectable
             selectMirror
@@ -267,7 +432,8 @@ function CalendarClient() {
         </div>
       </div>
 
-      <div className="px-4 pb-8 space-y-2">
+      {/* Available timeslots */}
+      <div className="px-4 pb-4 space-y-2">
         <h2 className="text-sm font-semibold">Available timeslots</h2>
         {availableList.length === 0 && (
           <p className="text-sm text-gray-500">No available slots.</p>
@@ -289,13 +455,100 @@ function CalendarClient() {
                 {capitalize(supervisorName)} — {STATUS_LABELS[s.status]}
               </div>
               <div className="mt-1 flex items-center justify-between">
-                <div className="text-sm text-gray-600">{s.location}</div>
+                <div className="text-sm text-gray-600">
+                  {s.location} • {left} {left === 1 ? 'space' : 'spaces'} available
+                </div>
                 <button 
                   className="btn" 
                   disabled={disabled} 
                   onClick={() => book(s.id)}
                 >
                   {disabled ? 'Full' : 'Book'}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Booked slots */}
+      <div className="px-4 pb-4 space-y-2">
+        <h2 className="text-sm font-semibold">Booked</h2>
+        {bookedList.length === 0 && (
+          <p className="text-sm text-gray-500">You haven't booked any slots yet.</p>
+        )}
+        {bookedList.map((s) => {
+          const supervisorName = emailToNameMap.get(s.supervisor) || emailToName(s.supervisor);
+          
+          return (
+            <div key={s.id} className="bg-green-50 rounded-xl shadow px-4 py-3 border border-green-200">
+              <div className="text-sm text-gray-700">
+                {withOrdinal(formatters.listDate, new Date(s.start))}
+              </div>
+              <div className="font-semibold">
+                {formatters.time.format(new Date(s.start))} - {formatters.time.format(new Date(s.end))}
+              </div>
+              <div className="text-sm text-gray-700">
+                {capitalize(supervisorName)} — {STATUS_LABELS[s.status]}
+              </div>
+              <div className="mt-1 text-sm text-gray-600">
+                {s.location}
+              </div>
+              <div className="mt-2 flex justify-end">
+                <button className="btn" onClick={() => unbook(s.id)}>
+                  Unbook
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Created slots */}
+      <div className="px-4 pb-8 space-y-2">
+        <h2 className="text-sm font-semibold">Created by you</h2>
+        {createdList.length === 0 && (
+          <p className="text-sm text-gray-500">You haven't created any slots yet.</p>
+        )}
+        {createdList.map((s) => {
+          const bookedUsers = s.bookedBy || [];
+          
+          return (
+            <div key={s.id} className="bg-blue-50 rounded-xl shadow px-4 py-3 border border-blue-200">
+              <div className="text-sm text-gray-700">
+                {withOrdinal(formatters.listDate, new Date(s.start))}
+              </div>
+              <div className="font-semibold">
+                {formatters.time.format(new Date(s.start))} - {formatters.time.format(new Date(s.end))}
+              </div>
+              <div className="text-sm text-gray-700">
+                {STATUS_LABELS[s.status]} — {s.location}
+              </div>
+              <div className="mt-2">
+                <div className="text-xs font-semibold text-gray-600 uppercase">
+                  Bookings ({s.bookings}/{s.capacity})
+                </div>
+                {bookedUsers.length === 0 ? (
+                  <p className="text-sm text-gray-500 mt-1">No bookings yet</p>
+                ) : (
+                  <div className="mt-1 space-y-1">
+                    {bookedUsers.map((email) => {
+                      const name = emailToNameMap.get(email) || emailToName(email);
+                      return (
+                        <div key={email} className="text-sm">
+                          • {capitalize(name)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <div className="mt-3 flex justify-end">
+                <button
+                  className="text-red-600 border border-red-300 rounded-xl px-3 py-1"
+                  onClick={() => deleteSlotById(s.id)}
+                >
+                  Delete slot
                 </button>
               </div>
             </div>
@@ -389,28 +642,17 @@ function CalendarClient() {
 
                 <div>
                   <div className="font-medium mb-1">Person</div>
-                  {users.length === 0 ? (
-                    <p className="text-sm text-gray-500">Loading users...</p>
-                  ) : (
-                    <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
-                      {users.map((user) => (
-                        <button
-                          key={user.email}
-                          type="button"
-                          className={`px-3 py-1 rounded-full border ${
-                            form.supervisor === user.email
-                              ? 'bg-blue-50 border-blue-400 text-blue-700'
-                              : 'bg-white'
-                          }`}
-                          onClick={() => setForm((f) => ({ ...f, supervisor: user.email }))}
-                        >
-                          {user.name}
-                          {user.email === currentUserEmail && ' (You)'}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  <div className="text-sm text-gray-700">
+                    {(emailToNameMap.get(currentUserEmail) || emailToName(currentUserEmail)) ? (
+                      <>
+                        {capitalize(emailToNameMap.get(currentUserEmail) || emailToName(currentUserEmail))} (You)
+                      </>
+                    ) : (
+                      'You'
+                    )}
+                  </div>
                 </div>
+
 
                 {/* Only show capacity for "available to supervise" */}
                 {form.status === 'available' && (

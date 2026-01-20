@@ -5,6 +5,7 @@ import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/aut
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { setPersistence, browserSessionPersistence } from 'firebase/auth';
 
 export default function Login() {
   const r = useRouter();
@@ -27,6 +28,7 @@ export default function Login() {
     setErr(null);
     setLoading(true);
     try {
+      await setPersistence(auth, browserSessionPersistence);
       await signInWithEmailAndPassword(auth, email.trim(), pw);
       r.push('/profile');
     } catch (e: any) {

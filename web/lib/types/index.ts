@@ -65,5 +65,6 @@ export type Slot = {
   end: string;
   capacity: number; // 0 for unavailable and events
   bookings: number;
+  bookedBy?: string[]; // Array of user emails who booked
   title?: string; // Only used for events
 };
