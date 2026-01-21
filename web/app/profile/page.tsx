@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { auth } from '@/lib/firebase';
-import { UserProfile, watchMyProfile } from '@/lib/users';
+import { UserProfile } from '@/lib/types';
+import { watchMyProfile } from '@/lib/users';
 
 function getInitials(fullName: string | undefined | null) {
   if (!fullName) return '?';

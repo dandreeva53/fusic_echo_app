@@ -1,6 +1,6 @@
 'use client';
 
-import type { Role, Accreditation, UserProfile } from '@/types';
+import type { Role, Accreditation, UserProfile } from '@/lib/types';
 import { auth, db } from '@/lib/firebase';
 import {
   doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp,

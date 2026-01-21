@@ -1,5 +1,5 @@
 // lib/constants.ts
-import type { Role, Accreditation, Status, Location, View, ImageQuality, YesNoUA } from '@/types';
+import type { Role, Accreditation, Status, Location, View, ImageQuality, YesNoUA, EventLocation } from '@/lib/types';
 
 export const ROLES: Role[] = ['Supervisor', 'Fellow'];
 

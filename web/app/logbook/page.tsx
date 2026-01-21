@@ -441,7 +441,7 @@ const unsignedCount = useMemo(
       doc.text('Findings', pageWidth / 2, yPos + 6, { align: 'center' });
 
       // Findings rows
-      const findings = [
+      const findings: Array<[string, 'Yes' | 'No' | 'U/A' | undefined]> = [
         ['LV dilated?', scan.lvDilated],
         ['LV significantly impaired?', scan.lvImpaired],
         ['RV dilated?', scan.rvDilated],
@@ -450,7 +450,7 @@ const unsignedCount = useMemo(
         ['Pericardial fluid?', scan.pericardialFluid],
         ['Pleural fluid', scan.pleuralFluid],
       ];
-
+      
       yPos += 10;
       doc.setFont('helvetica', 'normal');
       findings.forEach(([label, value]) => {
