@@ -264,8 +264,6 @@ async function saveSlot() {
       bookedBy: form.bookedBy || [],
       };
 
-    };
-
     // Only add title for events (never write undefined)
     const payload =
       form.status === 'event'
