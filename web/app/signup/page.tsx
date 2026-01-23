@@ -1,5 +1,6 @@
 'use client';
 
+import { isNhsEmail, NHS_ONLY_MESSAGE } from '@/lib/authGuards';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -33,6 +34,11 @@ export default function Signup() {
     setErr(null);
     setLoading(true);
     try {
+      const cleanEmail = email.trim().toLowerCase();
+      if (!isNhsEmail(cleanEmail)) {
+        alert(NHS_ONLY_MESSAGE);
+        return;
+      }
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), pw);
       if (name) await updateProfile(cred.user, { displayName: name });
       const profile: UserProfile = {
