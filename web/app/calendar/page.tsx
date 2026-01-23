@@ -246,10 +246,15 @@ async function saveSlot() {
     // Lock supervisor to signed-in user
     form.supervisor = currentUserEmail;
   }
+  
+  if (!currentUserEmail) {
+  alert('You must be signed in');
+  return;
+  }
 
   try {
-    const payloadBase: Omit<Slot, 'id' | 'title'> = {
-      supervisor: form.status === 'event' ? '' : (form.supervisor || ''),
+        const payloadBase: Omit<Slot, 'id' | 'title'> = {
+      supervisor: currentUserEmail, // ✅ always set, even for events
       status: form.status as Status,
       location: (form.location as Location) || 'UCLH',
       start: form.start!,
@@ -257,6 +262,8 @@ async function saveSlot() {
       capacity: form.status === 'available' ? Number(form.capacity) : 0,
       bookings: form.bookings ? Number(form.bookings) : 0,
       bookedBy: form.bookedBy || [],
+      };
+
     };
 
     // Only add title for events (never write undefined)
