@@ -414,13 +414,14 @@ async function unbook(id: string) {
       </div>
 
       <div className="px-4">
-        <div className="bg-white rounded-xl shadow p-2">
+        <div className="bg-white rounded-xl shadow p-2 overflow-x-auto">
           <FullCalendar
             ref={calRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             timeZone="local"
             height="auto"
+            contentHeight="auto"
             selectable
             selectMirror
             dayMaxEventRows
@@ -428,8 +429,9 @@ async function unbook(id: string) {
             headerToolbar={{
               left: 'prev,next',
               center: 'title',
-              right: 'dayGridMonth,timeGridWeek,timeGridDay',
+              right: 'dayGridMonth,timeGridWeek',
             }}
+            // Remove timeGridDay from mobile for better fit
             displayEventTime={false}
             dayHeaderFormat={{ weekday: 'short' }}
             slotLabelFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}

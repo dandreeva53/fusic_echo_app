@@ -12,6 +12,12 @@ export const metadata: Metadata = {
     icon: '/icon-192.png',
     apple: '/icon-192.png',
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5, // Allow zoom for accessibility
+    userScalable: true,
+  },
 }
 
 export default function RootLayout({

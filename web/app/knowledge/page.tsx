@@ -737,9 +737,9 @@ export default function Knowledge() {
   const current = chapters.find((c) => c.id === selectedChapter) ?? chapters[0];
 
   return (
-    <div className="flex gap-6 p-6">
-      {/* Left nav */}
-      <aside className="w-72 shrink-0">
+    <div className="flex flex-col md:flex-row gap-6 p-4 md:p-6">
+      {/* Left nav - full width on mobile, sidebar on desktop */}
+      <aside className="w-full md:w-72 md:shrink-0">
         <h1 className="text-xl font-bold mb-4">Knowledge</h1>
 
         <div className="space-y-2">
@@ -763,8 +763,8 @@ export default function Knowledge() {
         </div>
       </aside>
 
-      {/* Content */}
-      <main className="flex-1 min-w-0">
+      {/* Content - scrollable on mobile */}
+      <main className="flex-1 min-w-0 overflow-x-hidden">
         <div className="max-w-3xl">{current.content}</div>
       </main>
     </div>
