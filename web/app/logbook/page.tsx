@@ -7,10 +7,36 @@ import { auth } from '@/lib/firebase';
 import type { Scan } from '@/lib/types';
 import { watchScans, addScanFB } from './fb';
 import { formatters, isoToLocal, localToIso } from '@/lib/dateUtils';
-import { GENDERS } from '@/lib/constants';
+import { GENDERS, VIEWS, IMAGE_QUALITIES, YES_NO_UA } from '@/lib/constants';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import SignatureCanvas from 'react-signature-canvas';
+
+// Add TriToggle component before the main component
+function TriToggle({
+  value,
+  onChange,
+}: {
+  value?: 'Yes' | 'No' | 'U/A';
+  onChange: (v: 'Yes' | 'No' | 'U/A') => void;
+}) {
+  return (
+    <div className="flex gap-2">
+      {YES_NO_UA.map((v) => (
+        <button
+          key={v}
+          type="button"
+          className={`px-3 py-1 rounded-full border ${
+            value === v ? 'bg-blue-50 border-blue-400 text-blue-700' : 'bg-white'
+          }`}
+          onClick={() => onChange(v)}
+        >
+          {v}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function LogbookClient() {
   const [q, setQ] = useState('');
@@ -47,7 +73,7 @@ function LogbookClient() {
 const list = useMemo(() => {
   const query = q.trim().toLowerCase();
 
-  // Optional: allow “signed” / “unsigned” typed into search box
+  // Optional: allow "signed" / "unsigned" typed into search box
   const wantsSigned = /\bsigned\b/.test(query) && !/\bunsigned\b/.test(query);
   const wantsUnsigned = /\bunsigned\b|\bnot\s*signed\b/.test(query);
 
@@ -66,7 +92,7 @@ const list = useMemo(() => {
 
     // Text search (same as you already do)
     const hay = `${s.diagnosis} ${s.notes ?? ''} ${s.comments ?? ''} ${s.age ?? ''} ${s.gender ?? ''}`.toLowerCase();
-    // If query is only "signed"/"unsigned", don’t require it to match hay
+    // If query is only "signed"/"unsigned", don't require it to match hay
     const queryWithoutStatus = query
       .replace(/\bnot\s*signed\b/g, '')
       .replace(/\bunsigned\b/g, '')
@@ -108,6 +134,22 @@ const unsignedCount = useMemo(
       notes: form.notes?.trim() || undefined,
       comments: form.comments?.trim() || undefined,
       supervised: form.supervised ?? false,
+      indications: form.indications?.trim() || undefined,
+      ventilation: form.ventilation?.trim() || undefined,
+      hr: form.hr?.trim() || undefined,
+      bp: form.bp?.trim() || undefined,
+      cvp: form.cvp?.trim() || undefined,
+      cvSupport: form.cvSupport?.trim() || undefined,
+      views: form.views || undefined,
+      imageQuality: form.imageQuality || undefined,
+      lvDilated: form.lvDilated || undefined,
+      lvImpaired: form.lvImpaired || undefined,
+      rvDilated: form.rvDilated || undefined,
+      rvImpaired: form.rvImpaired || undefined,
+      lowPreload: form.lowPreload || undefined,
+      pericardialFluid: form.pericardialFluid || undefined,
+      pleuralFluid: form.pleuralFluid || undefined,
+      findingsSummary: form.findingsSummary?.trim() || undefined,
     };
 
     await addScanFB(next);
@@ -687,10 +729,10 @@ const unsignedCount = useMemo(
         )}
       </div>
 
-      {/* Add modal */}
+      {/* Add modal - UPDATED WITH ALL FIELDS */}
       {open && (
         <div className="fixed inset-0 bg-black/30 z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-white rounded-2xl p-4 space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-2xl bg-white rounded-2xl p-4 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <button className="text-blue-600" onClick={() => setOpen(false)}>
                 Cancel
@@ -700,6 +742,7 @@ const unsignedCount = useMemo(
               </button>
             </div>
 
+            <h3 className="text-center text-lg font-semibold">Summary</h3>
             <div className="grid sm:grid-cols-2 gap-3">
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium mb-1">Date & time</label>
@@ -710,16 +753,6 @@ const unsignedCount = useMemo(
                   onChange={(e) =>
                     setForm((f) => ({ ...f, createdAt: localToIso(e.target.value) }))
                   }
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium mb-1">Diagnosis</label>
-                <input
-                  className="w-full rounded-lg border px-3 py-2"
-                  placeholder="e.g., Tamponade"
-                  value={form.diagnosis ?? ''}
-                  onChange={(e) => setForm((f) => ({ ...f, diagnosis: e.target.value }))}
                 />
               </div>
 
@@ -772,7 +805,7 @@ const unsignedCount = useMemo(
                 </div>
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-sm font-medium mb-1">BMI</label>
                 <input
                   type="number"
@@ -789,7 +822,154 @@ const unsignedCount = useMemo(
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium mb-1">Notes</label>
+                <label className="block text-sm font-medium mb-1">Indications for scan</label>
+                <input
+                  className="w-full rounded-lg border px-3 py-2"
+                  value={form.indications ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, indications: e.target.value }))}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium mb-1">Diagnosis</label>
+                <input
+                  className="w-full rounded-lg border px-3 py-2"
+                  placeholder="e.g., Tamponade"
+                  value={form.diagnosis ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, diagnosis: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <h3 className="text-center text-lg font-semibold">Details</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">Ventilation</label>
+                <input
+                  className="w-full rounded-lg border px-3 py-2"
+                  value={form.ventilation ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, ventilation: e.target.value }))}
+                />
+              </div>
+
+              <div className="grid sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">HR</label>
+                  <input
+                    className="w-full rounded-lg border px-3 py-2"
+                    value={form.hr ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, hr: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">BP</label>
+                  <input
+                    className="w-full rounded-lg border px-3 py-2"
+                    value={form.bp ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, bp: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">CVP</label>
+                  <input
+                    className="w-full rounded-lg border px-3 py-2"
+                    value={form.cvp ?? ''}
+                    onChange={(e) => setForm((f) => ({ ...f, cvp: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">CV support</label>
+                <input
+                  className="w-full rounded-lg border px-3 py-2"
+                  value={form.cvSupport ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, cvSupport: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Views</label>
+                <div className="flex flex-wrap gap-2">
+                  {VIEWS.map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      className={`px-3 py-1 rounded-full border ${
+                        form.views?.includes(v)
+                          ? 'bg-blue-50 border-blue-400 text-blue-700'
+                          : 'bg-white'
+                      }`}
+                      onClick={() =>
+                        setForm((f) => {
+                          const cur = new Set(f.views ?? []);
+                          cur.has(v) ? cur.delete(v) : cur.add(v);
+                          return { ...f, views: Array.from(cur) as any };
+                        })
+                      }
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Image quality</label>
+                <div className="flex gap-2">
+                  {IMAGE_QUALITIES.map((q) => (
+                    <button
+                      key={q}
+                      type="button"
+                      className={`px-3 py-1 rounded-full border ${
+                        form.imageQuality === q
+                          ? 'bg-blue-50 border-blue-400 text-blue-700'
+                          : 'bg-white'
+                      }`}
+                      onClick={() => setForm((f) => ({ ...f, imageQuality: q }))}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <h3 className="text-center text-lg font-semibold">Findings</h3>
+            <div className="space-y-3">
+              {(
+                [
+                  ['LV dilated?', 'lvDilated'],
+                  ['LV significantly impaired?', 'lvImpaired'],
+                  ['RV dilated?', 'rvDilated'],
+                  ['RV significantly impaired?', 'rvImpaired'],
+                  ['Evidence of low preload?', 'lowPreload'],
+                  ['Pericardial fluid?', 'pericardialFluid'],
+                  ['Pleural fluid?', 'pleuralFluid'],
+                ] as const
+              ).map(([label, key]) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium mb-1">{label}</label>
+                  <TriToggle
+                    value={(form as any)[key]}
+                    onChange={(v) => setForm((f) => ({ ...f, [key]: v as any }))}
+                  />
+                </div>
+              ))}
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Summary of findings</label>
+                <textarea
+                  rows={4}
+                  className="w-full rounded-lg border px-3 py-2"
+                  placeholder="Please include conclusion, clinical correlation, suggested actions and requirement for referral?"
+                  value={form.findingsSummary ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, findingsSummary: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Personal notes</label>
                 <textarea
                   rows={3}
                   className="w-full rounded-lg border px-3 py-2"
@@ -798,7 +978,7 @@ const unsignedCount = useMemo(
                 />
               </div>
 
-              <div className="sm:col-span-2">
+              <div>
                 <label className="block text-sm font-medium mb-1">Comments</label>
                 <textarea
                   rows={3}
