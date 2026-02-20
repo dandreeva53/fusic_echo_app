@@ -21,6 +21,12 @@ Stack:
    ```bash
    npm i
    npm run deploy   # or: npm run build && firebase deploy --only functions
+
+
+
+
+
+   #Change supervisor, mentor and trainee
    ```
 
 ## Notes
