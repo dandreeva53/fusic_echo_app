@@ -42,6 +42,7 @@ export default function DirectoryPage() {
   }, [users, q]);
 
   const supervisors = filtered.filter((u) => u.role === 'Supervisor');
+  const mentors = filtered.filter((u) => u.role === 'Mentor');
   const fellows = filtered.filter((u) => u.role === 'Fellow');
 
   return (

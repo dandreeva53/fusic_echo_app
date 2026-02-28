@@ -2,7 +2,7 @@
 export type Gender = 'M' | 'F' | 'Other';
 export type ImageQuality = 'Good' | 'Acceptable' | 'Poor';
 export type YesNoUA = 'Yes' | 'No' | 'U/A';
-export type Role = 'Supervisor' | 'Fellow +';
+export type Role = 'Supervisor' | 'Mentor' | 'Fellow';
 export type Accreditation = 'FUSIC' | 'BSE Level 1' | 'BSE Level 2';
 export type Status = 'available' | 'unavailable' | 'event';
 export type Location = 'UCLH' | 'WMS' | 'GWB';
