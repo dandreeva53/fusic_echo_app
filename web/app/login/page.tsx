@@ -38,11 +38,11 @@ export default function Login() {
     }
   }
 
-  async function reset() {
+async function reset() {
   if (!email) return setErr('Enter your email above, then click Reset.');
   try {
     const actionCodeSettings = {
-      url: `${window.location.origin}/login`, // redirects back to your login page
+      url: 'https://fusic-app.vercel.app/login',
       handleCodeInApp: false,
     };
     await sendPasswordResetEmail(auth, email.trim(), actionCodeSettings);
