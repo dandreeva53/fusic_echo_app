@@ -42,7 +42,7 @@ async function reset() {
   if (!email) return setErr('Enter your email above, then click Reset.');
   try {
     const actionCodeSettings = {
-      url: 'fusic-app.vercel.app/login',
+      url: 'https://fusic-app.vercel.app',
       handleCodeInApp: false,
     };
     await sendPasswordResetEmail(auth, email.trim(), actionCodeSettings);
