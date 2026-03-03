@@ -41,11 +41,7 @@ export default function Login() {
 async function reset() {
   if (!email) return setErr('Enter your email above, then click Reset.');
   try {
-    const actionCodeSettings = {
-      url: 'https://fusic-app.vercel.app',
-      handleCodeInApp: false,
-    };
-    await sendPasswordResetEmail(auth, email.trim(), actionCodeSettings);
+    await sendPasswordResetEmail(auth, email.trim());
     alert('Password reset email sent.');
   } catch (e: any) {
     setErr(e.message ?? 'Could not send reset email');
