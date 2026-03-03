@@ -39,10 +39,10 @@ export default function Login() {
   }
 
 async function reset() {
-  if (!email) return setErr('Enter your email above, then click Reset.');
+  if (!email) return setErr('Enter your email above, then click Forgot password?.');
   try {
     await sendPasswordResetEmail(auth, email.trim());
-    alert('Password reset email sent.');
+    alert('Password reset email sent. Please check your spam folder.');
   } catch (e: any) {
     setErr(e.message ?? 'Could not send reset email');
   }
