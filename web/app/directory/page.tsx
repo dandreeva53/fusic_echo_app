@@ -62,6 +62,13 @@ export default function DirectoryPage() {
         {supervisors.length === 0 && <Empty />}
       </Section>
 
+      <Section title="Mentor">
+        {mentors.map((u) => (
+          <UserRow key={u.email} user={u} />
+        ))}
+        {mentors.length === 0 && <Empty />}
+      </Section>
+
       <Section title="Fellow">
         {fellows.map((u) => (
           <UserRow key={u.email} user={u} />
